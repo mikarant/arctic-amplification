@@ -25,9 +25,7 @@ def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
     slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
     slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
     ratio = slope_a/slope
-    # df_obs[obsname][y+period-1] = ratio
-    # df_pvalues['BEST'][y+39] = 1.96*stderr*10
-    # df_pvalues_a['BEST'][y+39] = 1.96*stderr_a*10
+
     
     return ratio 
 
@@ -58,6 +56,9 @@ mid_cat = list(model_stats['MODEL'][middle])
 # choose the scenario
 ssp='ssp245'
 
+if modelGeneration == 'cmip5':
+    ssp = 'rcp85'
+
 # variable
 var = 'tas'
 
@@ -82,17 +83,14 @@ weights = np.cos(np.deg2rad(cmip6.lat))
 weights.name = "weights"
 
 models =  list(cmip6['source_id'].values)
-# models.remove('NorESM2-LM')
-# models.remove('CESM2-WACCM')
-
-# l = np.array_split(models,4)
-
-# models = list(l[3])
 
 ### lenght of period (default = 40 years)
-period = 40
+period = 30
 
-years = np.arange(1961,2061)
+# starting year (the first year which is included to the linear trends)
+startYear = 1961
+
+years = np.arange(startYear,2100-period+1)
 
 mod = models
 
@@ -102,6 +100,8 @@ df_slope_a =pd.DataFrame(index=years+period-1, columns=mod)
 
 temp_arctic = pd.DataFrame(index=cmip6.year, columns=mod)
 temp = pd.DataFrame(index=cmip6.year, columns=mod)
+
+
 # loop over all models
 for m in mod:
     print(m)
@@ -160,10 +160,8 @@ temp_obs['CW'] = t_cw
 
 
 
-years = np.arange(1961,1981)
+years = np.arange(startYear,2020-period+1)
 df_obs =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
-# df_pvalues =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
-# df_pvalues_a =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
 
 for y in years:
     yrange = np.arange(y,y+period)
@@ -178,6 +176,10 @@ for y in years:
 
   
  
+    
+###################################
+# PLOT RESULTS
+###################################
    
  
 upper_bondary = np.array(np.quantile(df,q=0.95, axis=1), dtype=float) 
@@ -222,7 +224,7 @@ else:
     # plt.title('All models in '+ssp)
     figureName = 'cmip_aa_'+ssp+'_all.png'
 
-plt.scatter(2019, 3.83, s=40, c='r', zorder=5)
+plt.scatter(2019, df_obs.mean(axis=1)[2019], s=40, c='r', zorder=5)
 # plt.annotate('AA in 2019: 3.8', (2021, 3.8), xycoords='data', va='center', color='r')
 
 
@@ -256,30 +258,30 @@ cmap = plt.get_cmap("tab10")
 
 plt.figure(figsize=(9,5), dpi=200)
 ax=plt.gca()
-plt.plot(temp.mean(axis=1)[np.arange(1961,2099)], label='Global mean CMIP6')
+plt.plot(temp.mean(axis=1)[np.arange(startYear,2099)], label='Global mean CMIP6')
 
 
-ax.fill_between(np.arange(1961,2099),  
-                temp.quantile(0.95,axis=1)[np.arange(1961,2099)],
-                temp.quantile(0.05,axis=1)[np.arange(1961,2099)], 
-                where=temp.quantile(0.95,axis=1)[np.arange(1961,2099)]
-                >=  temp.quantile(0.05,axis=1)[np.arange(1961,2099)],
+ax.fill_between(np.arange(startYear,2099),  
+                temp.quantile(0.95,axis=1)[np.arange(startYear,2099)],
+                temp.quantile(0.05,axis=1)[np.arange(startYear,2099)], 
+                where=temp.quantile(0.95,axis=1)[np.arange(startYear,2099)]
+                >=  temp.quantile(0.05,axis=1)[np.arange(startYear,2099)],
                 facecolor=cmap(0), interpolate=True,
                 zorder=0,alpha=0.4)
-# plt.plot(temp['CAMS-CSM1-0'][np.arange(1961,2099)], label='Global mean CAMS-CSM1-0',
+# plt.plot(temp['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Global mean CAMS-CSM1-0',
 #           color=cmap(4))
 
-# plt.plot(temp_arctic.mean(axis=1)[np.arange(1961,2099)], label='Arctic mean CMIP6',
+# plt.plot(temp_arctic.mean(axis=1)[np.arange(startYear,2099)], label='Arctic mean CMIP6',
 #           color=cmap(1))
 
-# ax.fill_between(np.arange(1961,2099),  
-#                 temp_arctic.quantile(0.95,axis=1)[np.arange(1961,2099)],
-#                 temp_arctic.quantile(0.05,axis=1)[np.arange(1961,2099)], 
-#                 where=temp_arctic.quantile(0.95,axis=1)[np.arange(1961,2099)]
-#                 >=  temp_arctic.quantile(0.05,axis=1)[np.arange(1961,2099)],
+# ax.fill_between(np.arange(startYear,2099),  
+#                 temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)],
+#                 temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)], 
+#                 where=temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)]
+#                 >=  temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)],
 #                 facecolor=cmap(1), interpolate=True,
 #                 zorder=0,alpha=0.4)
-# plt.plot(temp_arctic['CAMS-CSM1-0'][np.arange(1961,2099)], label='Arctic mean CAMS-CSM1-0',
+# plt.plot(temp_arctic['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Arctic mean CAMS-CSM1-0',
 #           color=cmap(5))
 
 plt.plot(obs_anom,label='Global mean obs', color=cmap(2))
