@@ -18,16 +18,45 @@ seaborn.reset_orig()
 
 def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
 
-    
-    f = temp_obs[obsname][yrange]
+    f = temp_ref[obsname][yrange]
     f_a = temp_obs_arctic[obsname][yrange]
     
     slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
     slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
     ratio = slope_a/slope
 
-    
     return ratio 
+
+def getObsTemps(obsname, varname):
+    
+    ds = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/'+obsname+'_annual.nc')
+
+    
+    latname = (ds['latitude'] if 'latitude' in ds else ds['lat']).name
+    lonname = (ds['longitude'] if 'longitude' in ds else ds['lon']).name
+
+        
+    weights = np.cos(np.deg2rad(ds[latname]))
+
+    
+    temp_ref = ds[varname].weighted(weights).mean((lonname, latname)).squeeze()
+    temp_arctic = ds[varname].where(ds[latname]>=66.5).weighted(weights).mean((lonname, latname)).squeeze()
+    
+    dtype = ds.time.values.dtype
+    print(dtype)
+    
+    if dtype =='datetime64[ns]':
+        index = pd.to_datetime(ds.time.values).year
+    elif dtype == 'float64':
+        index = ds.time.values.astype(int)
+    
+    df = pd.DataFrame(index=index, columns=['Reference temperature', 'Arctic temperature'])
+    
+    df['Reference temperature'] = temp_ref
+    df['Arctic temperature'] = temp_arctic
+    
+
+    return df
 
 
 model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_stats_selected.xlsx',
@@ -73,10 +102,20 @@ else:
     
 
 
-# open observational datasets
-best = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/BEST_annual.nc')
-gistemp = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/GISTEMP_annual.nc')
-cw = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/COWTAN_annual.nc')
+# select observational datasets
+obsDatasets = ['BEST', 'GISTEMP', 'COWTAN','ERA5']
+
+# variables in observations
+variables = {'GISTEMP': 'tempanomaly',
+             'BEST': 'temperature',
+             'COWTAN': 'temperature_anomaly',
+             'ERA5': 't2m',
+             }
+
+# best = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/BEST_annual.nc')
+# gistemp = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/GISTEMP_annual.nc')
+# cw = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/COWTAN_annual.nc')
+# era5 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/ERA5_annual.nc')
 
 # weights for model grid
 weights = np.cos(np.deg2rad(cmip6.lat))
@@ -85,7 +124,7 @@ weights.name = "weights"
 models =  list(cmip6['source_id'].values)
 
 ### lenght of period (default = 40 years)
-period = 30
+period = 40
 
 # starting year (the first year which is included to the linear trends)
 startYear = 1961
@@ -136,43 +175,42 @@ print(str(np.round(df_slope_a.loc[2019].mean(),4)))
 print('Arctic amplification 1980-2019:')
 print(str(np.round(df.loc[2019].mean(),4)))
 
-### obs
-weights_best = np.cos(np.deg2rad(best.latitude))
-weights_gistemp = np.cos(np.deg2rad(gistemp.lat))
-weights_cw = np.cos(np.deg2rad(cw.latitude))
+### observations
 
-t_best = best['temperature'].weighted(weights_best).mean(("longitude", "latitude")).squeeze()
-t_best_a = best['temperature'].where(best.latitude>=66.5).weighted(weights_best).mean(("longitude", "latitude")).squeeze()
 
-t_gistemp = gistemp['tempanomaly'].weighted(weights_gistemp).mean(("lon", "lat")).squeeze()
-t_gistemp_a = gistemp['tempanomaly'].where(gistemp.lat>=66.5).weighted(weights_gistemp).mean(("lon", "lat")).squeeze()
+temp_obs_arctic = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets)
+temp_obs_ref = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets)
 
-t_cw = cw['temperature_anomaly'].weighted(weights_cw).mean(("longitude", "latitude")).squeeze()
-t_cw_a = cw['temperature_anomaly'].where(cw.latitude>=66.5).weighted(weights_cw).mean(("longitude", "latitude")).squeeze()
+for o in obsDatasets:
+    df_temp = getObsTemps(o, variables[o])
+    
+    temp_obs_arctic[o] = df_temp.loc[startYear:,'Arctic temperature']
+    temp_obs_ref[o] = df_temp.loc[startYear:,'Reference temperature']
 
-temp_obs_arctic = pd.DataFrame(t_best_a,index=np.arange(1900,2020), columns=['BEST'])
-temp_obs = pd.DataFrame(t_best, index=np.arange(1900,2020), columns=['BEST'])
 
-temp_obs_arctic['GISTEMP'] = t_gistemp_a
-temp_obs['GISTEMP'] = t_gistemp
-temp_obs_arctic['CW'] = t_cw_a
-temp_obs['CW'] = t_cw
+
+# temp_obs = pd.DataFrame(t_best, index=np.arange(1900,2020), columns=['BEST'])
+
+# temp_obs_arctic['GISTEMP'] = t_gistemp_a
+# temp_obs['GISTEMP'] = t_gistemp
+# temp_obs_arctic['CW'] = t_cw_a
+# temp_obs['CW'] = t_cw
 
 
 
 years = np.arange(startYear,2020-period+1)
-df_obs =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
+df_obs =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 
 for y in years:
     yrange = np.arange(y,y+period)
     
-    r1 = getRatioObs(temp_obs, temp_obs_arctic, 'BEST', yrange, period)
-    r2 = getRatioObs(temp_obs, temp_obs_arctic, 'GISTEMP', yrange, period)
-    r3 = getRatioObs(temp_obs, temp_obs_arctic, 'CW', yrange, period)
+    r1 = getRatioObs(temp_obs_ref, temp_obs_arctic, 'BEST', yrange, period)
+    r2 = getRatioObs(temp_obs_ref, temp_obs_arctic, 'GISTEMP', yrange, period)
+    r3 = getRatioObs(temp_obs_ref, temp_obs_arctic, 'COWTAN', yrange, period)
     
     df_obs['BEST'][y+period-1] = r1
     df_obs['GISTEMP'][y+period-1] = r2
-    df_obs['CW'][y+period-1] = r3
+    df_obs['COWTAN'][y+period-1] = r3
 
   
  
@@ -248,7 +286,7 @@ plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 obs_mean_a = temp_obs_arctic.mean(axis=1)
 clim_obs_a = obs_mean_a.loc[1981:2010].mean()
 obs_anom_a = obs_mean_a-clim_obs_a
-obs_mean = temp_obs.mean(axis=1)
+obs_mean = temp_obs_ref.mean(axis=1)
 clim_obs = obs_mean.loc[1981:2010].mean()
 obs_anom = obs_mean-clim_obs
 
