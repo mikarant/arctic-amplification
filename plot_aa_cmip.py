@@ -5,6 +5,7 @@ Created on Wed Nov 11 15:32:42 2020
 
 @author: rantanem
 """
+import sys
 import xarray as xr
 import numpy as np
 import pandas as pd
@@ -15,9 +16,27 @@ from scipy import stats
 import seaborn
 seaborn.reset_orig()
 
+def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
+
+    
+    f = temp_obs[obsname][yrange]
+    f_a = temp_obs_arctic[obsname][yrange]
+    
+    slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
+    slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
+    ratio = slope_a/slope
+    # df_obs[obsname][y+period-1] = ratio
+    # df_pvalues['BEST'][y+39] = 1.96*stderr*10
+    # df_pvalues_a['BEST'][y+39] = 1.96*stderr_a*10
+    
+    return ratio 
+
 
 model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_stats_selected.xlsx',
                             engine='openpyxl')
+
+## choose cmip5 or cmip6 models
+modelGeneration = 'cmip6'
 
 ##### sort by ECS
 ## upper models
@@ -40,12 +59,17 @@ mid_cat = list(model_stats['MODEL'][middle])
 ssp='ssp245'
 
 # variable
-# var = '__xarray_dataarray_variable__'
 var = 'tas'
 
-# open model dataset                  
-cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'+ssp+'.nc')
-# cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc')
+# open model dataset
+if modelGeneration == 'cmip6':                  
+    cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'+ssp+'.nc')
+elif modelGeneration == 'cmip5':
+    cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc')
+else:
+    print('Choose either cmip5 or cmip6')
+    sys.exit()
+    
 
 
 # open observational datasets
@@ -65,15 +89,16 @@ models =  list(cmip6['source_id'].values)
 
 # models = list(l[3])
 
-
+### lenght of period (default = 40 years)
+period = 40
 
 years = np.arange(1961,2061)
 
 mod = models
 
-df =pd.DataFrame(index=years+39, columns=mod)
-df_slope =pd.DataFrame(index=years+39, columns=mod)
-df_slope_a =pd.DataFrame(index=years+39, columns=mod)
+df =pd.DataFrame(index=years+period-1, columns=mod)
+df_slope =pd.DataFrame(index=years+period-1, columns=mod)
+df_slope_a =pd.DataFrame(index=years+period-1, columns=mod)
 
 temp_arctic = pd.DataFrame(index=cmip6.year, columns=mod)
 temp = pd.DataFrame(index=cmip6.year, columns=mod)
@@ -93,15 +118,15 @@ for m in mod:
     temp_arctic[m] = t_a - clim
     
     for y in years:
-        yrange = np.arange(y,y+40)
+        yrange = np.arange(y,y+period)
         f = temp[m][yrange]
         f_a = temp_arctic[m][yrange]
         slope, _, _, p_value, _ = stats.linregress(yrange, f.values)
         slope_a, _, _, p_value_a, _ = stats.linregress(yrange, f_a.values)
         ratio = slope_a/slope
-        df[m][y+39] = ratio
-        df_slope[m][y+39] = slope
-        df_slope_a[m][y+39] = slope_a
+        df[m][y+period-1] = ratio
+        df_slope[m][y+period-1] = slope
+        df_slope_a[m][y+period-1] = slope_a
         
 ## print global mean and arctic mean trends ffrom  models
 print('Global mean trend 1980-2019:')
@@ -136,38 +161,21 @@ temp_obs['CW'] = t_cw
 
 
 years = np.arange(1961,1981)
-df_obs =pd.DataFrame(index=years+39, columns=['BEST', 'GISTEMP', 'CW'])
-df_pvalues =pd.DataFrame(index=years+39, columns=['BEST', 'GISTEMP', 'CW'])
-df_pvalues_a =pd.DataFrame(index=years+39, columns=['BEST', 'GISTEMP', 'CW'])
+df_obs =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
+# df_pvalues =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
+# df_pvalues_a =pd.DataFrame(index=years+period-1, columns=['BEST', 'GISTEMP', 'CW'])
 
 for y in years:
-    yrange = np.arange(y,y+40)
-    f = temp_obs['BEST'][yrange]
-    f_a = temp_obs_arctic['BEST'][yrange]
-    slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
-    slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
-    ratio = slope_a/slope
-    df_obs['BEST'][y+39] = ratio
-    df_pvalues['BEST'][y+39] = 1.96*stderr*10
-    df_pvalues_a['BEST'][y+39] = 1.96*stderr_a*10
+    yrange = np.arange(y,y+period)
     
-    f = temp_obs['GISTEMP'][yrange]
-    f_a = temp_obs_arctic['GISTEMP'][yrange]
-    slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
-    slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
-    ratio = slope_a/slope
-    df_obs['GISTEMP'][y+39] = ratio
-    df_pvalues['GISTEMP'][y+39] = 1.96*stderr*10
-    df_pvalues_a['GISTEMP'][y+39] = 1.96*stderr_a*10
+    r1 = getRatioObs(temp_obs, temp_obs_arctic, 'BEST', yrange, period)
+    r2 = getRatioObs(temp_obs, temp_obs_arctic, 'GISTEMP', yrange, period)
+    r3 = getRatioObs(temp_obs, temp_obs_arctic, 'CW', yrange, period)
     
-    f = temp_obs['CW'][yrange]
-    f_a = temp_obs_arctic['CW'][yrange]
-    slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
-    slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
-    ratio = slope_a/slope
-    df_obs['CW'][y+39] = ratio
-    df_pvalues['CW'][y+39] =1.96* stderr*10
-    df_pvalues_a['CW'][y+39] = 1.96*stderr_a*10
+    df_obs['BEST'][y+period-1] = r1
+    df_obs['GISTEMP'][y+period-1] = r2
+    df_obs['CW'][y+period-1] = r3
+
   
  
    
