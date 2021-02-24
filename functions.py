@@ -24,7 +24,7 @@ def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
 
     return ratio 
 
-def getObsTemps(obsname, varname, latitude_threshold):
+def getObsTemps(obsname, varname, latitude_threshold,refarea):
     
     # open dataset
     ds = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/'+obsname+'_annual.nc')
@@ -36,8 +36,16 @@ def getObsTemps(obsname, varname, latitude_threshold):
     # define weights  
     weights = np.cos(np.deg2rad(ds[latname]))
 
-    # calculate temperatures
-    temp_ref = ds[varname].weighted(weights).mean((lonname, latname)).squeeze()
+    if refarea =='global':
+        cond = ds[latname]>=-90
+    elif refarea =='nh':
+        cond = ds[latname]>=0
+    elif refarea =='sh':
+        cond = ds[latname]<=0    
+
+
+# calculate temperatures
+    temp_ref = ds[varname].where(cond).weighted(weights).mean((lonname, latname)).squeeze()
     temp_arctic = ds[varname].where(ds[latname]>=latitude_threshold).weighted(weights).mean((lonname, latname)).squeeze()
     
     dtype = ds.time.values.dtype
