@@ -15,12 +15,18 @@ from scipy import stats
 
 def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
 
+    Nsamples = 100000
+
+    
     f = temp_ref[obsname][yrange]
     f_a = temp_arctic[obsname][yrange]
     
     slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
     slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
     ratio = slope_a/slope
+    
+    slope_arctic_samples = slope_a + stderr_a * np.random.randn(Nsamples)
+    slope_global_samples = slope + stderr * np.random.randn(Nsamples)
 
     return ratio 
 

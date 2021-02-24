@@ -5,6 +5,8 @@ Created on Wed Nov 11 15:32:42 2020
 
 @author: rantanem
 """
+from os import listdir
+from os.path import isfile, join
 import sys
 import xarray as xr
 import numpy as np
@@ -28,7 +30,7 @@ startYear = 1961
 latitude_threshold = 66.5
 
 # reference area ('global', 'nh' or 'sh')
-refarea = 'nh'
+refarea = 'global'
 
 
 model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_stats_selected.xlsx',
@@ -66,8 +68,15 @@ if modelGeneration == 'cmip5':
 var = 'tas'
 
 # open model dataset
-if modelGeneration == 'cmip6':                  
-    cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'+ssp+'.nc')
+if modelGeneration == 'cmip6':
+    import re
+    ssp_path = '/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'
+    files = [f for f in listdir(ssp_path) if isfile(join(ssp_path, f))]
+    full_files = [ssp_path + f for f in files]
+    models = [re.sub('\.nc','',f) for f in files]
+
+    # open one model dataset
+    ds =  xr.open_dataset(full_files[0])
 elif modelGeneration == 'cmip5':
     cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc')
 else:
@@ -86,18 +95,18 @@ variables = {'GISTEMP': 'tempanomaly',
              'ERA5': 't2m',
              }
 
-# weights for the model grid
-weights = np.cos(np.deg2rad(cmip6.lat))
-
-models =  list(cmip6['source_id'].values)
-
 
 if refarea =='global':
-    cond = cmip6.lat>=-90
+    cond = ds.lat>=-90
 elif refarea =='nh':
-    cond = cmip6.lat>=0
+    cond = ds.lat>=0
 elif refarea =='sh':
-    cond = cmip6.lat<=0
+    cond = ds.lat<=0
+    
+# weights for the model grid
+weights = np.cos(np.deg2rad(ds.lat))
+
+
 
 years = np.arange(startYear,2100-period+1)
 
@@ -107,21 +116,27 @@ df =pd.DataFrame(index=years+period-1, columns=mod)
 df_slope =pd.DataFrame(index=years+period-1, columns=mod)
 df_slope_a =pd.DataFrame(index=years+period-1, columns=mod)
 
-temp_arctic = pd.DataFrame(index=cmip6.year, columns=mod)
-temp = pd.DataFrame(index=cmip6.year, columns=mod)
+cmip_years = np.unique(pd.to_datetime(ds.time.values).year)
+temp_arctic = pd.DataFrame(index=cmip_years, columns=mod)
+temp = pd.DataFrame(index=cmip_years, columns=mod)
 
 
 # loop over all models
 for m in mod:
     print(m)
-    # select temperature
-    t = cmip6[var].sel(source_id=m).where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
+    yearmean = cdo.yearmean(input=ssp_path+m+'.nc')
+    ds = xr.open_dataset(yearmean)
     
-    clim = t.sel(year=np.arange(1981,2011)).mean()
+
+    
+    # select temperature
+    t = ds[var].where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
+    
+    clim = t.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp[m] = t - clim
     # select temperature
-    t_a = cmip6[var].sel(source_id=m).where(cmip6.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
-    clim = t_a.sel(year=np.arange(1981,2011)).mean()
+    t_a = ds[var].where(ds.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
+    clim = t_a.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp_arctic[m] = t_a - clim
     
     for y in years:
@@ -170,16 +185,37 @@ for y in years:
         df_obs[o][y+period-1] = r
         
     
- 
+### export trends in csv-file
+yrange =  np.arange(1980,2020)
+df_reference_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
+df_arctic_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
+
+df_trends = pd.DataFrame(index=['Arctic trend', 'Global trend'], columns=obsDatasets)
+
+for o in obsDatasets:
+    f = temp_obs_ref[o][yrange]
+    f_a = temp_obs_arctic[o][yrange]
     
+    slope, _, _, p_value, stderr = stats.linregress(yrange, f)
+    slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
+    
+    df_arctic_temps[o] = f_a
+    df_reference_temps[o] = f
+
+    df_trends[o]['Arctic trend'] = slope_a
+    df_trends[o]['Global trend'] = slope
+
+df_trends.to_csv('/home/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
+df_arctic_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
+df_reference_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
+
 ###################################
 # PLOT RESULTS
 ###################################
    
  
-upper_bondary = np.array(np.quantile(df,q=0.95, axis=1), dtype=float) 
-lower_bondary =  np.array(np.quantile(df,q=0.05, axis=1), dtype=float) 
-  
+upper_bondary = np.array(np.mean(df, axis=1) + np.std(df, axis=1)*1.6448, dtype=float) 
+lower_bondary = np.array(np.mean(df, axis=1) - np.std(df, axis=1)*1.6448, dtype=float) 
 
     
 plt.figure(figsize=(9,6), dpi=200)
@@ -248,6 +284,7 @@ clim_obs = obs_mean.loc[1981:2010].mean()
 obs_anom = obs_mean-clim_obs
 
 
+ 
 
 cmap = plt.get_cmap("tab10")
 
@@ -257,10 +294,10 @@ plt.plot(temp.mean(axis=1)[np.arange(startYear,2099)], label='Global mean CMIP6'
 
 
 ax.fill_between(np.arange(startYear,2099),  
-                temp.quantile(0.95,axis=1)[np.arange(startYear,2099)],
-                temp.quantile(0.05,axis=1)[np.arange(startYear,2099)], 
-                where=temp.quantile(0.95,axis=1)[np.arange(startYear,2099)]
-                >=  temp.quantile(0.05,axis=1)[np.arange(startYear,2099)],
+                (temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)],
+                (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)], 
+                where=(temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]
+                >= (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)],
                 facecolor=cmap(0), interpolate=True,
                 zorder=0,alpha=0.4)
 # plt.plot(temp['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Global mean CAMS-CSM1-0',
@@ -334,26 +371,9 @@ maxmean = pd.DataFrame(df.loc[2000:2019].max().mean(), columns=['aa'], index=['C
 ecs_aa = model_ecs.join(b)
 
 
-    
-
-plt.figure(figsize=(9,5), dpi=200)
-plt.scatter(x=ecs_aa['ECS'],y=ecs_aa['aa'])
+  
 
 
-for i in range(0,len(ecs_aa.index)):
-    plt.annotate(ecs_aa.index[i], (ecs_aa['ECS'][i], ecs_aa['aa'][i]+.06), fontsize=7)
-    
-plt.axhline(y=df_obs.mean(axis=1).max(), color='r', linestyle='--')
-plt.annotate('Observed', (1.8,3.85), color='r')
-
-plt.axhline(y=ecs_aa['aa'].mean(), color='k', linestyle='--')
-plt.annotate('CMIP5 mean', (1.8,ecs_aa['aa'].mean() - 0.15), color='k')
-    
-plt.xlabel('Equilibrium climate sensitivity [°C]')
-plt.ylabel('Maximum Arctic amplification ratio by 2099\ncalculated with 40-year linear trends')
-# plt.title('Arctic amplification vs. ECS')
-
-ecs_aa.corr()
 
 
 aavalues = maxobs.append(maxmean).append(b)
