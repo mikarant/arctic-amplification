@@ -5,6 +5,7 @@ Created on Wed Nov 11 15:32:42 2020
 
 @author: rantanem
 """
+import os
 from os import listdir
 from os.path import isfile, join
 import sys
@@ -13,6 +14,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import functions as fcts
+import plots
 from cdo import *
 cdo = Cdo()
 from scipy import stats
@@ -31,6 +33,9 @@ latitude_threshold = 66.5
 
 # reference area ('global', 'nh' or 'sh')
 refarea = 'global'
+
+# Month/season (2,' DJF' etc. For annual, select 'ANN')
+season = 12
 
 
 model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_stats_selected.xlsx',
@@ -59,10 +64,6 @@ mid_cat = list(model_stats['MODEL'][middle])
 # choose the scenario
 ssp='ssp245'
 
-if modelGeneration == 'cmip5':
-    ssp = 'rcp85'
-
-
 
 # variable
 var = 'tas'
@@ -77,10 +78,8 @@ if modelGeneration == 'cmip6':
 
     # open one model dataset
     ds =  xr.open_dataset(full_files[0])
-elif modelGeneration == 'cmip5':
-    cmip6 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc')
 else:
-    print('Choose either cmip5 or cmip6')
+    print('Choose cmip6')
     sys.exit()
     
 
@@ -95,16 +94,19 @@ variables = {'GISTEMP': 'tempanomaly',
              'ERA5': 't2m',
              }
 
+# long names of observations
+longnames = ['Berkeley\nEarth',
+             'Gistemp',
+             'Cowtan&\nWay',
+             'ERA5',
+             ]
 
-if refarea =='global':
-    cond = ds.lat>=-90
-elif refarea =='nh':
-    cond = ds.lat>=0
-elif refarea =='sh':
-    cond = ds.lat<=0
-    
-# weights for the model grid
-weights = np.cos(np.deg2rad(ds.lat))
+
+if type(season) == int:
+    operator = '-selmon,'
+    season = str(season)
+elif type(season) == str:
+    operator = '-selseason,'
 
 
 
@@ -122,12 +124,22 @@ temp = pd.DataFrame(index=cmip_years, columns=mod)
 
 
 # loop over all models
-for m in mod:
+for m in mod[:2]:
     print(m)
-    yearmean = cdo.yearmean(input=ssp_path+m+'.nc')
-    ds = xr.open_dataset(yearmean)
+    yearmean = cdo.yearmean(input=operator+season+' '+ ssp_path+m+'.nc')
+    rm = cdo.remapcon('r720x360 -selvar,tas ',input=yearmean, options='-b F32')
+    ds = xr.open_dataset(rm)
     
-
+    # weights for the model grid
+    weights = np.cos(np.deg2rad(ds.lat))
+    
+    if refarea =='global':
+        cond = ds.lat>=-90
+    elif refarea =='nh':
+        cond = ds.lat>=0
+    elif refarea =='sh':
+        cond = ds.lat<=0
+    
     
     # select temperature
     t = ds[var].where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
@@ -135,6 +147,7 @@ for m in mod:
     clim = t.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp[m] = t - clim
     # select temperature
+    
     t_a = ds[var].where(ds.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
     clim = t_a.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp_arctic[m] = t_a - clim
@@ -149,14 +162,17 @@ for m in mod:
         df[m][y+period-1] = ratio
         df_slope[m][y+period-1] = slope
         df_slope_a[m][y+period-1] = slope_a
+    
+    os.remove(yearmean)
+    os.remove(rm)
         
 ## print global mean and arctic mean trends ffrom  models
 print('Global mean trend 1980-2019:')
-print(str(np.round(df_slope.loc[2019].mean(),4)))
+print(str(np.round(df_slope.loc[2019].mean(),5)))
 print('Arctic mean trend 1980-2019:')
-print(str(np.round(df_slope_a.loc[2019].mean(),4)))
+print(str(np.round(df_slope_a.loc[2019].mean(),5)))
 print('Arctic amplification 1980-2019:')
-print(str(np.round(df.loc[2019].mean(),4)))
+print(str(np.round(df.loc[2019].mean(),5)))
 
 ### observations
 
@@ -167,7 +183,7 @@ temp_obs_ref = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets
 # loop over datasets
 for o in obsDatasets:
     # get temperatures in the reference area and arctic and put them to the dataframes
-    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea)
+    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea, operator, season)
     
     temp_obs_arctic[o] = df_temp.loc[startYear:,'Arctic temperature']
     temp_obs_ref[o] = df_temp.loc[startYear:,'Reference temperature']
@@ -176,13 +192,17 @@ for o in obsDatasets:
 # calculate AA ratios for the observational datasets
 years = np.arange(startYear,2020-period+1)
 df_obs =pd.DataFrame(index=years+period-1, columns=obsDatasets)
+df_obs_min =pd.DataFrame(index=years+period-1, columns=obsDatasets)
+df_obs_max =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 
 for y in years:
     yrange = np.arange(y,y+period)
     
     for o in obsDatasets:
-        r = fcts.getRatioObs(temp_obs_ref, temp_obs_arctic, o, yrange, period)
+        r,int_min,int_max = fcts.getRatioObs(temp_obs_ref, temp_obs_arctic, o, yrange, period)
         df_obs[o][y+period-1] = r
+        df_obs_min[o][y+period-1] = int_min
+        df_obs_max[o][y+period-1] = int_max
         
     
 ### export trends in csv-file
@@ -191,6 +211,7 @@ df_reference_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
 df_arctic_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
 
 df_trends = pd.DataFrame(index=['Arctic trend', 'Global trend'], columns=obsDatasets)
+df_err = pd.DataFrame(index=['Arctic', 'Global'], columns=obsDatasets)
 
 for o in obsDatasets:
     f = temp_obs_ref[o][yrange]
@@ -204,6 +225,9 @@ for o in obsDatasets:
 
     df_trends[o]['Arctic trend'] = slope_a
     df_trends[o]['Global trend'] = slope
+    
+    df_err[o]['Arctic'] = stderr_a
+    df_err[o]['Global'] = stderr
 
 df_trends.to_csv('/home/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
 df_arctic_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
@@ -212,8 +236,17 @@ df_reference_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/r
 ###################################
 # PLOT RESULTS
 ###################################
-   
- 
+
+
+cmap = plt.get_cmap("tab10")
+
+
+plots.plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot=True)
+
+plots.plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_obs_max, df, season, annot=True)
+
+
+
 upper_bondary = np.array(np.mean(df, axis=1) + np.std(df, axis=1)*1.6448, dtype=float) 
 lower_bondary = np.array(np.mean(df, axis=1) - np.std(df, axis=1)*1.6448, dtype=float) 
 
@@ -285,8 +318,6 @@ obs_anom = obs_mean-clim_obs
 
 
  
-
-cmap = plt.get_cmap("tab10")
 
 plt.figure(figsize=(9,5), dpi=200)
 ax=plt.gca()

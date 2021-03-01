@@ -10,6 +10,8 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 from scipy import stats
+from cdo import *
+cdo = Cdo()
 
 
 
@@ -27,13 +29,27 @@ def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
     
     slope_arctic_samples = slope_a + stderr_a * np.random.randn(Nsamples)
     slope_global_samples = slope + stderr * np.random.randn(Nsamples)
-
-    return ratio 
-
-def getObsTemps(obsname, varname, latitude_threshold,refarea):
     
-    # open dataset
-    ds = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/'+obsname+'_annual.nc')
+    confidence_int_min = np.percentile(slope_arctic_samples / slope_global_samples, 5)
+    confidence_int_max = np.percentile(slope_arctic_samples / slope_global_samples, 95)
+    
+    return ratio, confidence_int_min, confidence_int_max
+
+def getObsTemps(obsname, varname, latitude_threshold,refarea, operator, season):
+ 
+
+    # variables in observations
+    filenames = {'GISTEMP': '/home/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded.nc',
+                 'BEST': '/home/rantanem/Documents/python/data/arctic_warming/BEST-regridded-retimed.nc',
+                 'COWTAN': '/home/rantanem/Documents/python/data/arctic_warming/COWTAN-regridded.nc',
+                 'ERA5': '/home/rantanem/Documents/python/data/arctic_warming/era5_t2m_1950-2019.nc',
+                 }
+
+    inputfile = filenames[obsname]
+    file = cdo.yearmean(input=operator+season+' '+inputfile)
+
+    ds = xr.open_dataset(file)
+
 
     # define coordinate names
     latname = (ds['latitude'] if 'latitude' in ds else ds['lat']).name
@@ -50,16 +66,16 @@ def getObsTemps(obsname, varname, latitude_threshold,refarea):
         cond = ds[latname]<=0    
 
 
-# calculate temperatures
+    # calculate temperatures
     temp_ref = ds[varname].where(cond).weighted(weights).mean((lonname, latname)).squeeze()
     temp_arctic = ds[varname].where(ds[latname]>=latitude_threshold).weighted(weights).mean((lonname, latname)).squeeze()
     
-    dtype = ds.time.values.dtype
+    # dtype = ds.time.values.dtype
     
-    if dtype =='datetime64[ns]':
-        index = pd.to_datetime(ds.time.values).year
-    elif dtype == 'float64':
-        index = ds.time.values.astype(int)
+    # if dtype =='datetime64[ns]':
+    index = pd.to_datetime(ds.time.values).year
+    # elif (dtype == 'float64') | (dtype == 'int32') | (dtype == 'float32'):
+    #     index = ds.time.values.astype(int)
     
     df = pd.DataFrame(index=index, columns=['Reference temperature', 'Arctic temperature'])
     

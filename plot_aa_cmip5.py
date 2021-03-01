@@ -5,6 +5,7 @@ Created on Wed Nov 11 15:32:42 2020
 
 @author: rantanem
 """
+import os
 import xarray as xr
 import numpy as np
 import pandas as pd
@@ -29,7 +30,8 @@ latitude_threshold = 66.5
 # reference area ('global', 'nh' or 'sh')
 refarea = 'global'
 
-
+# Season ('DJF' etc. For annual, select 'ANN')
+season = 'ANN'
 
 ## choose cmip5 or cmip6 models
 modelGeneration = 'cmip5'
@@ -47,7 +49,10 @@ if modelGeneration == 'cmip5':
 var = 'tas'
 
 # open model dataset
-cmip5 = xr.open_dataset('/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc')
+path = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc'
+
+cmip5 = xr.open_dataset(path)
+
 
 
 # select observational datasets
@@ -61,21 +66,13 @@ variables = {'GISTEMP': 'tempanomaly',
              }
 
 
-if refarea =='global':
-    cond = cmip5.lat>=-90
-elif refarea =='nh':
-    cond = cmip5.lat>=0
-elif refarea =='sh':
-    cond = cmip5.lat<=0
-    
-# weights for the model grid
-weights = np.cos(np.deg2rad(cmip5.lat))
-
 
 
 years = np.arange(startYear,2100-period+1)
 
 mod = list(cmip5['source_id'].values)
+# mod.remove('BNU-ESM')
+# mod.remove('FIO-ESM')
 
 df =pd.DataFrame(index=years+period-1, columns=mod)
 df_slope =pd.DataFrame(index=years+period-1, columns=mod)
@@ -87,19 +84,35 @@ temp = pd.DataFrame(index=cmip_years, columns=mod)
 
 
 # loop over all models
-for m in mod:
+for m in mod[:]:
     print(m)
-   
+    path = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+m+'_cmip5.nc'
+    rm  = cdo.remapcon('r720x360 -selvar,tas ',input=path, options='-b F32')
+    ds = xr.open_dataset(rm)
+    
+    
+    
+    if refarea =='global':
+        cond = ds.lat>=-90
+    elif refarea =='nh':
+        cond = ds.lat>=0
+    elif refarea =='sh':
+        cond = ds.lat<=0
+    
+    # weights for the model grid
+    weights = np.cos(np.deg2rad(ds.lat))
 
     
     # select temperature
-    t = cmip5[var].sel(source_id=m).where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
+    t = ds[var].where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
     
-    clim = t.sel(year=np.arange(1980,2011)).mean()
+    # clim = t.sel(year=np.arange(1980,2011)).mean()
+    clim = t.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp[m] = t - clim
     # select temperature
-    t_a = cmip5[var].sel(source_id=m).where(cmip5.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
-    clim = t_a.sel(year=np.arange(1980,2011)).mean()
+    t_a = ds[var].where(ds.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
+    # clim = t_a.sel(year=np.arange(1980,2011)).mean()
+    clim = t_a.sel(time=slice("1981-01-01", "2010-12-31")).mean()
     temp_arctic[m] = t_a - clim
     
     for y in years:
@@ -112,6 +125,10 @@ for m in mod:
         df[m][y+period-1] = ratio
         df_slope[m][y+period-1] = slope
         df_slope_a[m][y+period-1] = slope_a
+    
+
+    os.remove(rm)
+        
         
 ## print global mean and arctic mean trends ffrom  models
 print('Global mean trend 1980-2019:')
@@ -120,6 +137,10 @@ print('Arctic mean trend 1980-2019:')
 print(str(np.round(df_slope_a.loc[2019].mean(),4)))
 print('Arctic amplification 1980-2019:')
 print(str(np.round(df.loc[2019].mean(),4)))
+
+df_slope.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_ref.csv')
+df_slope_a.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_arctic.csv')
+df.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_ratios.csv')
 
 ### observations
 
@@ -130,7 +151,7 @@ temp_obs_ref = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets
 # loop over datasets
 for o in obsDatasets:
     # get temperatures in the reference area and arctic and put them to the dataframes
-    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea)
+    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea, season)
     
     temp_obs_arctic[o] = df_temp.loc[startYear:,'Arctic temperature']
     temp_obs_ref[o] = df_temp.loc[startYear:,'Reference temperature']
@@ -144,7 +165,7 @@ for y in years:
     yrange = np.arange(y,y+period)
     
     for o in obsDatasets:
-        r = fcts.getRatioObs(temp_obs_ref, temp_obs_arctic, o, yrange, period)
+        r, int_min, int_max = fcts.getRatioObs(temp_obs_ref, temp_obs_arctic, o, yrange, period)
         df_obs[o][y+period-1] = r
         
     
@@ -186,7 +207,7 @@ ax=plt.gca()
 plt.plot(df.loc[:,:] ,linewidth=1)
 # plt.plot(df.loc[:,'CanESM5'],linewidth=1, label='Single models')
 
-plt.plot(df.mean(axis=1),'k' ,linewidth=2, label='CMIP6 mean')
+plt.plot(df.mean(axis=1),'k' ,linewidth=2, label='CMIP5 mean')
 # plt.plot(df.max(axis=1),'k' ,linewidth=0.5, label='CMIP6 max/min')
 # plt.plot(df.min(axis=1),'k' ,linewidth=0.5)
 
