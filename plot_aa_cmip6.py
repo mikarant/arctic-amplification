@@ -35,11 +35,12 @@ latitude_threshold = 66.5
 refarea = 'global'
 
 # Month/season (2,' DJF' etc. For annual, select 'ANN')
-season = 12
-
+season = 'ANN'
 
 model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_stats_selected.xlsx',
                             engine='openpyxl')
+
+
 
 ## choose cmip5 or cmip6 models
 modelGeneration = 'cmip6'
@@ -74,7 +75,16 @@ if modelGeneration == 'cmip6':
     ssp_path = '/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'
     files = [f for f in listdir(ssp_path) if isfile(join(ssp_path, f))]
     full_files = [ssp_path + f for f in files]
-    models = [re.sub('\.nc','',f) for f in files]
+    # models = [re.sub('\.nc','',f) for f in files]
+    models = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/ssp245/MODEL_NAMES.xlsx',
+                           engine='openpyxl').values.squeeze()
+
+    
+    sic_path = ssp_path+'sic_kimmo/'
+    sic_files = [f for f in listdir(sic_path) if isfile(join(sic_path, f))]
+    sic_full_files = [sic_path + f for f in sic_files]
+    sic_models = [re.sub('\.nc','',f) for f in sic_files]
+
 
     # open one model dataset
     ds =  xr.open_dataset(full_files[0])
@@ -114,17 +124,23 @@ years = np.arange(startYear,2100-period+1)
 
 mod = models
 
+## AA based on linear trend ratio
 df =pd.DataFrame(index=years+period-1, columns=mod)
 df_slope =pd.DataFrame(index=years+period-1, columns=mod)
 df_slope_a =pd.DataFrame(index=years+period-1, columns=mod)
+df_slope_sic =pd.DataFrame(index=years+period-1, columns=mod)
+
+## AA based on difference in T anomalies
+df_anom =pd.DataFrame(index=years, columns=mod)
 
 cmip_years = np.unique(pd.to_datetime(ds.time.values).year)
 temp_arctic = pd.DataFrame(index=cmip_years, columns=mod)
 temp = pd.DataFrame(index=cmip_years, columns=mod)
+siconc = pd.DataFrame(index=cmip_years, columns=mod)
 
 
 # loop over all models
-for m in mod[:2]:
+for m in mod[:]:
     print(m)
     yearmean = cdo.yearmean(input=operator+season+' '+ ssp_path+m+'.nc')
     rm = cdo.remapcon('r720x360 -selvar,tas ',input=yearmean, options='-b F32')
@@ -141,6 +157,25 @@ for m in mod[:2]:
         cond = ds.lat<=0
     
     
+    ### check if sea ice is found
+    sic_model = m + '.nc'
+    sic_fullpath = sic_path + sic_model
+    sic_exists = os.path.exists(sic_fullpath)
+    if sic_exists:
+        print('Sea ice exists')
+        cdoinput =  '-selyear,1850/2099 -fldsum -sellonlatbox,0,360,0,90 -mul -divc,100 '+sic_fullpath+' -gridarea '+sic_fullpath
+        iceareafile = cdo.yearmean(input =operator+season+' '+ cdoinput)
+        ds_sic = xr.open_dataset(iceareafile)
+
+        sic = ds_sic['siconc'].squeeze()
+        clim = sic.sel(time=slice("1981-01-01", "2010-12-31")).mean()
+        
+        siconc[m] = sic-clim
+        for y in years:
+            yrange = np.arange(y,y+period)
+            s = siconc[m][yrange]
+            slope_sic, _, _, p_value_sic, _ = stats.linregress(yrange, s.values)
+            df_slope_sic[m][y+period-1] = slope_sic
     # select temperature
     t = ds[var].where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
     
@@ -162,10 +197,25 @@ for m in mod[:2]:
         df[m][y+period-1] = ratio
         df_slope[m][y+period-1] = slope
         df_slope_a[m][y+period-1] = slope_a
+       
+        df_anom[m][y] = temp_arctic[m][y] - temp[m][y]
     
     os.remove(yearmean)
     os.remove(rm)
+    
+
+## calculate observed sea ice trend
+file = '/home/rantanem/Downloads/ecv_seaice/HadISST.2.2.0.0_sea_ice_concentration.nc'
+cdoinput =  '-selyear,1979/2018 -fldsum -sellonlatbox,0,360,0,90 -mul -selvar,sic '+file+' -gridarea -selvar,sic '+file
+iceareafile = cdo.yearmean(input =operator+season+' '+ cdoinput)
+ds_sic = xr.open_dataset(iceareafile)
+sic_obs = ds_sic['sic'].squeeze()
+
+clim = sic_obs.sel(time=slice("1981-01-01", "2010-12-31")).mean()
         
+sic_obs_anom = sic_obs-clim
+slope_sic, _, _, p_value_sic, _ = stats.linregress(pd.to_datetime(sic_obs_anom.time.values).year, sic_obs_anom.values)
+
 ## print global mean and arctic mean trends ffrom  models
 print('Global mean trend 1980-2019:')
 print(str(np.round(df_slope.loc[2019].mean(),5)))
@@ -194,6 +244,8 @@ years = np.arange(startYear,2020-period+1)
 df_obs =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 df_obs_min =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 df_obs_max =pd.DataFrame(index=years+period-1, columns=obsDatasets)
+## AA using difference in SAT anomalies
+df_diff =pd.DataFrame(index=temp_obs_ref.index, columns=obsDatasets)
 
 for y in years:
     yrange = np.arange(y,y+period)
@@ -203,10 +255,17 @@ for y in years:
         df_obs[o][y+period-1] = r
         df_obs_min[o][y+period-1] = int_min
         df_obs_max[o][y+period-1] = int_max
+
+for y in temp_obs_ref.index:
+    for o in obsDatasets:
+        diff = temp_obs_arctic[o][y] - temp_obs_ref[o][y]
+        df_diff[o][y] = diff
+        
         
     
 ### export trends in csv-file
-yrange =  np.arange(1980,2020)
+syear = 2020-period
+yrange =  np.arange(syear,2020)
 df_reference_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
 df_arctic_temps = pd.DataFrame(index=yrange, columns=obsDatasets)
 
@@ -233,6 +292,13 @@ df_trends.to_csv('/home/rantanem/Documents/python/data/arctic_warming/observed_t
 df_arctic_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
 df_reference_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
 
+### ### read calculated (by Otto) error bounds for cmip6 results
+cmip6_errors = pd.read_csv('/home/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs.csv',index_col=0)
+    
+# replace the calculated values by Otto's bootstrapping work
+df_obs_min.loc[2019] = cmip6_errors['CIlowerPercentile']
+df_obs_max.loc[2019] = cmip6_errors['CIupperPercentile']
+df_obs.loc[2019] = cmip6_errors['ratio']
 ###################################
 # PLOT RESULTS
 ###################################
@@ -246,15 +312,23 @@ plots.plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot=True)
 plots.plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_obs_max, df, season, annot=True)
 
 
+# plots.plot_aa_diff(df_anom, df_diff)
 
-upper_bondary = np.array(np.mean(df, axis=1) + np.std(df, axis=1)*1.6448, dtype=float) 
-lower_bondary = np.array(np.mean(df, axis=1) - np.std(df, axis=1)*1.6448, dtype=float) 
+plots.trend_plot_2d(df_trends, df_err, df_slope_a, df_slope)
+
+
+plots.sia_tas_scatter(df_slope_sic, df_slope_a, df_trends, slope_sic)
+plots.sia_aa_scatter(df_slope_sic, df, df_obs, slope_sic)
+
+upper_bondary = df.astype(float).quantile(0.95,axis=1)
+lower_bondary = df.astype(float).quantile(0.05,axis=1)
 
     
 plt.figure(figsize=(9,6), dpi=200)
 ax=plt.gca()
 plt.plot(df.loc[:,:] ,linewidth=1)
-# plt.plot(df.loc[:,'CanESM5'],linewidth=1, label='Single models')
+plt.plot(df.loc[:,'INM-CM5-0'],linewidth=2, label='Single models')
+
 
 plt.plot(df.mean(axis=1),'k' ,linewidth=2, label='CMIP6 mean')
 # plt.plot(df.max(axis=1),'k' ,linewidth=0.5, label='CMIP6 max/min')
@@ -298,11 +372,14 @@ figurePath = '/home/rantanem/Documents/python/figures/'
    
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
-# models_to_csv = [ 'FGOALS-f3-L','FIO-ESM-2-0','MRI-ESM2-0','CAMS-CSM1-0','GFDL-ESM4','GFDL-CM4',
-#                  'CanESM5','CESM2-WACCM','IPSL-CM6A-LR','BCC-CSM2-MR','MIROC6',
-#                  'INM-CM5-0','NorESM2-LM']
+models_to_csv = [ 'FGOALS-f3-L','MRI-ESM2-0','CAMS-CSM1-0','GFDL-ESM4',
+                  'CanESM5','CESM2-WACCM','IPSL-CM6A-LR','BCC-CSM2-MR','MIROC6',
+                  'INM-CM5-0','NorESM2-LM', 'CMCC-CM2-SR5', 'NorESM2-MM', 'NESM3',
+                  'NorESM2-MM', 'CMCC-CM2-SR5']
   
-# df.loc[:,models_to_csv].to_csv('/home/rantanem/Downloads/aa_'+ssp+'.csv')
+df.loc[:,models_to_csv].to_csv('/home/rantanem/Downloads/aa_'+ssp+'.csv')
+
+df_slope.loc[:,models_to_csv].to_csv('/home/rantanem/Downloads/ref_trends_'+ssp+'.csv')
 # cond = df >= 3.8
 # cs = (cond.sum(axis=1))# / np.shape(df)[1]) * 100
 # cs.plot()
@@ -331,31 +408,31 @@ ax.fill_between(np.arange(startYear,2099),
                 >= (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)],
                 facecolor=cmap(0), interpolate=True,
                 zorder=0,alpha=0.4)
-# plt.plot(temp['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Global mean CAMS-CSM1-0',
-#           color=cmap(4))
+plt.plot(temp['INM-CM5-0'][np.arange(startYear,2099)], label='Global mean CAMS-CSM1-0',
+          color=cmap(4))
 
-# plt.plot(temp_arctic.mean(axis=1)[np.arange(startYear,2099)], label='Arctic mean CMIP6',
-#           color=cmap(1))
+plt.plot(temp_arctic.mean(axis=1)[np.arange(startYear,2099)], label='Arctic mean CMIP6',
+          color=cmap(1))
 
-# ax.fill_between(np.arange(startYear,2099),  
-#                 temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)],
-#                 temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)], 
-#                 where=temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)]
-#                 >=  temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)],
-#                 facecolor=cmap(1), interpolate=True,
-#                 zorder=0,alpha=0.4)
-# plt.plot(temp_arctic['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Arctic mean CAMS-CSM1-0',
-#           color=cmap(5))
+ax.fill_between(np.arange(startYear,2099),  
+                temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)],
+                temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)], 
+                where=temp_arctic.quantile(0.95,axis=1)[np.arange(startYear,2099)]
+                >=  temp_arctic.quantile(0.05,axis=1)[np.arange(startYear,2099)],
+                facecolor=cmap(1), interpolate=True,
+                zorder=0,alpha=0.4)
+plt.plot(temp_arctic['INM-CM5-0'][np.arange(startYear,2099)], label='Arctic mean CAMS-CSM1-0',
+          color=cmap(5))
 
-plt.plot(obs_anom,label='Global mean obs', color=cmap(2))
-# plt.plot(obs_anom_a, label='Arctic mean obs', color=cmap(3))
+# plt.plot(obs_anom,label='Global mean obs', color=cmap(2))
+plt.plot(obs_anom_a, label='Arctic mean obs', color=cmap(3))
 
 
 
 # plt.plot(df.mean(axis=1),'k' ,linewidth=2, label='AA in ')
-plt.ylim(-1,1.5)
+# plt.ylim(-1,1.5)
 plt.xticks(np.arange(1900,2110,10))
-plt.xlim(1965,2025)
+plt.xlim(1965,2099)
 plt.grid(True)
 plt.ylabel('Temperature anomaly (1981-2010) [°C]', fontsize=14)
 
@@ -389,58 +466,76 @@ b = df.loc[2000:2019].astype(float)
 
 
 
+syear=2010
+eyear=2040
+range_min = 0.05
+range_max = 0.95
 
-model_ecs = model_stats[['MODEL','ECS']]
-model_ecs.index= model_ecs['MODEL']
-model_ecs= model_ecs.drop(columns=['MODEL'])
+obsmin = df_obs-df_obs_min
+obsmax = df_obs_max-df_obs
 
-b = pd.DataFrame(df.loc[2000:2019].max(), columns=['aa'], index=df.loc[2019].index)
-maxobs = pd.DataFrame(df_obs.mean(axis=1).max(), columns=['aa'], index=['Observed'])
-maxmean = pd.DataFrame(df.loc[2000:2019].max().mean(), columns=['aa'], index=['CMIP5 mean'])
+cmip5_ratios = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_ratios.csv',index_col=0)
+
+a = pd.DataFrame(cmip5_ratios.loc[syear:eyear].max(), columns=['aa'], index=cmip5_ratios.loc[2019].index)
+amin = np.mean(a.values) - np.quantile(a,range_min)
+amax =   np.quantile(a,range_max)- np.mean(a.values) 
+aerr = [[amin],[amax]]
 
 
-ecs_aa = model_ecs.join(b)
+b = pd.DataFrame(df.loc[syear:eyear].max(), columns=['aa'], index=df.loc[2019].index)
+maxobs = pd.DataFrame(df_obs.loc[syear:eyear].max(axis=0).mean(), columns=['aa'], index=['Observed'])
+maxmean = pd.DataFrame(df.loc[syear:eyear].max().mean(), columns=['aa'], index=['CMIP6 mean'])
 
+bmin = np.mean(b.values) - np.quantile(b,range_min)
+bmax =   np.quantile(b,range_max)- np.mean(b.values) 
+berr = [[bmin],[bmax]]
+
+aavalues = maxobs.append(maxmean).append(a)
+
+bbvalues = maxobs.append(maxmean).append(b)
 
   
 
-
-
-
-aavalues = maxobs.append(maxmean).append(b)
-
-
 plt.figure(figsize=(9,5), dpi=200)
 ax=plt.gca()
-barlist = plt.bar(x=aavalues.index, height=aavalues.values.squeeze(), facecolor='lightblue')
-barlist[0].set_color('r')
-barlist[1].set_color('b')
-plt.xticks( rotation='vertical')
 
-plt.ylabel('Maximum Arctic amplification ratio by 2019\ncalculated with 40-year linear trends')
+ax.errorbar(1,df_obs['BEST'].loc[syear:eyear].max(),
+            yerr=[[obsmin['BEST'].loc[2018]],[obsmin['BEST'].loc[2018]]],
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+
+ax.errorbar(2,df_obs['GISTEMP'].loc[syear:eyear].max(),
+            yerr=[[obsmin['GISTEMP'].loc[2018]],[obsmin['GISTEMP'].loc[2018]]],
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+
+ax.errorbar(3,df_obs['COWTAN'].loc[syear:eyear].max(),
+            yerr=[[obsmin['COWTAN'].loc[2018]],[obsmin['COWTAN'].loc[2018]]],
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+
+ax.errorbar(4,df_obs['ERA5'].loc[syear:eyear].max(),
+            yerr=[[obsmin['ERA5'].loc[2018]],[obsmin['ERA5'].loc[2018]]],
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+
+    
+ax.errorbar(5,np.mean(a.values), yerr=aerr,
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(2))
+
+ax.errorbar(6,np.mean(b.values), yerr=berr,
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(2))
+
+plt.xticks(np.arange(1,7),labels=list(df_obs.columns) + ['CMIP5\nmodels'] + ['CMIP6\nmodels'], fontsize=14)
+
+ax.tick_params(axis='both', which='major', labelsize=14)
+ax.tick_params(axis='both', which='minor', labelsize=14)
+
+plt.title('Maximum Arctic amplification in '+str(syear)+'-'+str(eyear)+' in observations vs. models')
+
+ax.grid(axis='y')
+
+
+plt.ylabel('Arctic amplification ratio', fontsize=14)
 figureName = 'max_aa.png'
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
 
-aa_t = pd.DataFrame(index=df.columns, columns=['aa','T'])
-
-for m in df.columns:
-    aa = df[m].loc[2000:2019]
-    T = temp[m].loc[2000:2019]
-    d_aa, _, _, p_value, stderr = stats.linregress(aa.index, aa.astype(float).values)
-    d_T, _, _, p_value, stderr = stats.linregress(T.index, T.astype(float).values)
-    # max_aa_year = df[m].astype(float).idxmax()
-    # temp_anom = temp[m].loc[max_aa_year]
-    aa_t.loc[m].aa = d_aa
-    aa_t.loc[m].T = d_T
-
-aa = df_obs.mean(axis=1).loc[2000:2019]
-T = obs_anom.loc[2000:2019]
-d_aa, _, _, p_value, stderr = stats.linregress(aa.index, aa.astype(float).values)
-d_T, _, _, p_value, stderr = stats.linregress(T.index, T.astype(float).values)      
-  
-aa_t = aa_t.append(pd.Series({'aa': d_aa, 'T': d_T}, name='Observed'))
-
-aa_t.to_csv('/home/rantanem/Documents/python/data/arctic_warming/'+ ssp+'_dAAdT.csv')
 
 

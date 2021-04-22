@@ -65,7 +65,11 @@ variables = {'GISTEMP': 'tempanomaly',
              'ERA5': 't2m',
              }
 
-
+if type(season) == int:
+    operator = '-selmon,'
+    season = str(season)
+elif type(season) == str:
+    operator = '-selseason,'
 
 
 years = np.arange(startYear,2100-period+1)
@@ -87,7 +91,8 @@ temp = pd.DataFrame(index=cmip_years, columns=mod)
 for m in mod[:]:
     print(m)
     path = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+m+'_cmip5.nc'
-    rm  = cdo.remapcon('r720x360 -selvar,tas ',input=path, options='-b F32')
+    yearmean = cdo.yearmean(input=operator+season+' '+ path)
+    rm  = cdo.remapcon('r720x360 -selvar,tas ',input=yearmean, options='-b F32')
     ds = xr.open_dataset(rm)
     
     
@@ -107,7 +112,7 @@ for m in mod[:]:
     t = ds[var].where(cond).weighted(weights).mean(("lon", "lat")).squeeze()
     
     # clim = t.sel(year=np.arange(1980,2011)).mean()
-    clim = t.sel(time=slice("1981-01-01", "2010-12-31")).mean()
+    clim = t.sel(time=slice("1850-01-01", "1900-12-31")).mean()
     temp[m] = t - clim
     # select temperature
     t_a = ds[var].where(ds.lat>=latitude_threshold).weighted(weights).mean(("lon", "lat")).squeeze()
@@ -126,8 +131,10 @@ for m in mod[:]:
         df_slope[m][y+period-1] = slope
         df_slope_a[m][y+period-1] = slope_a
     
-
+    print(yearmean)
+    os.remove(yearmean)
     os.remove(rm)
+
         
         
 ## print global mean and arctic mean trends ffrom  models
@@ -151,7 +158,7 @@ temp_obs_ref = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets
 # loop over datasets
 for o in obsDatasets:
     # get temperatures in the reference area and arctic and put them to the dataframes
-    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea, season)
+    df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea, operator, season)
     
     temp_obs_arctic[o] = df_temp.loc[startYear:,'Arctic temperature']
     temp_obs_ref[o] = df_temp.loc[startYear:,'Reference temperature']
@@ -198,8 +205,8 @@ df_reference_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/r
 ###################################
    
  
-upper_bondary = np.array(np.mean(df, axis=1) + np.std(df, axis=1)*1.6448, dtype=float) 
-lower_bondary = np.array(np.mean(df, axis=1) - np.std(df, axis=1)*1.6448, dtype=float) 
+upper_bondary = np.array(np.mean(df, axis=1) + np.std(df, axis=1)*1.6448, dtype=float)
+lower_bondary = np.array(np.mean(df, axis=1) - np.std(df, axis=1)*1.6448, dtype=float)
 
     
 plt.figure(figsize=(9,6), dpi=200)
@@ -256,18 +263,19 @@ cmap = plt.get_cmap("tab10")
 
 plt.figure(figsize=(9,5), dpi=200)
 ax=plt.gca()
-plt.plot(temp.mean(axis=1)[np.arange(startYear,2099)], label='Global mean CMIP6')
+plt.plot(temp.mean(axis=1)[np.arange(startYear,2050)]-0.61, label='Global mean CMIP5')
 
+plt.axvline(x=2005, color='k',linestyle='--')
 
 ax.fill_between(np.arange(startYear,2099),  
-                (temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)],
-                (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)], 
-                where=(temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]
-                >= (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)],
+                (temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]-0.61,
+                (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]-0.61, 
+                where=(temp.mean(axis=1) + 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]-0.61
+                >= (temp.mean(axis=1) - 1.6448*temp.std(axis=1))[np.arange(startYear,2099)]-0.61,
                 facecolor=cmap(0), interpolate=True,
                 zorder=0,alpha=0.4)
-# plt.plot(temp['CAMS-CSM1-0'][np.arange(startYear,2099)], label='Global mean CAMS-CSM1-0',
-#           color=cmap(4))
+plt.plot(temp['BNU-ESM'][np.arange(startYear,2099)], label='Global mean BNU-ESM',
+          color=cmap(4))
 
 # plt.plot(temp_arctic.mean(axis=1)[np.arange(startYear,2099)], label='Arctic mean CMIP6',
 #           color=cmap(1))
@@ -288,11 +296,11 @@ plt.plot(obs_anom,label='Global mean obs', color=cmap(2))
 
 
 # plt.plot(df.mean(axis=1),'k' ,linewidth=2, label='AA in ')
-plt.ylim(-1,1.5)
+# plt.ylim(-0.6,2.6)
 plt.xticks(np.arange(1900,2110,10))
-plt.xlim(1965,2025)
+plt.xlim(1985,2050)
 plt.grid(True)
-plt.ylabel('Temperature anomaly (1981-2010) [°C]', fontsize=14)
+plt.ylabel('Temperature anomaly (1986-2005) [°C]', fontsize=14)
 
 plt.legend(ncol=2, loc='upper left',)
 
@@ -300,8 +308,8 @@ plt.legend(ncol=2, loc='upper left',)
 figureName = 'cmip_temp_'+ssp+'_all.png'
    
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
-
-
+import sys
+sys.exit()
 diff = df.loc[2019] -df_obs.loc[2019].mean()
 diff.sort_values()
 
@@ -317,9 +325,9 @@ b = df.loc[2000:2019].astype(float)
 
 
 
-b = pd.DataFrame(df.loc[2000:2019].max(), columns=['aa'], index=df.loc[2019].index)
+b = pd.DataFrame(df.loc[2000:2099].max(), columns=['aa'], index=df.loc[2019].index)
 maxobs = pd.DataFrame(df_obs.mean(axis=1).max(), columns=['aa'], index=['Observed'])
-maxmean = pd.DataFrame(df.loc[2000:2019].max().mean(), columns=['aa'], index=['CMIP5 mean'])
+maxmean = pd.DataFrame(df.loc[2000:2099].max().mean(), columns=['aa'], index=['CMIP5 mean'])
 
 
 
@@ -340,8 +348,9 @@ barlist[0].set_color('r')
 barlist[1].set_color('b')
 plt.xticks( rotation='vertical')
 
-plt.ylabel('Maximum Arctic amplification ratio by 2019\ncalculated with 40-year linear trends')
+plt.ylabel('Maximum Arctic amplification ratio by 2099\ncalculated with 40-year linear trends')
 figureName = 'max_aa.png'
+plt.ylim(0,5.25)
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
 
