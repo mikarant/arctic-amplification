@@ -10,8 +10,8 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
-inputpath = '/home/rantanem/Documents/python/data/arctic_warming/BEST-regridded.nc'
-outputpath = '/home/rantanem/Documents/python/data/arctic_warming/BEST-regridded-retimed.nc'
+inputpath = '/home/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded.nc'
+outputpath = '/home/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded-retimed.nc'
 
 # Open the file as a dataset
 ds = xr.open_dataset(inputpath)
