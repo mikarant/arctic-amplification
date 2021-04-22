@@ -68,19 +68,20 @@ def getObsTemps(obsname, varname, latitude_threshold,refarea, operator, season):
 
     # calculate temperatures
     temp_ref = ds[varname].where(cond).weighted(weights).mean((lonname, latname)).squeeze()
+    clim = temp_ref.sel(time=slice("1981-01-01", "2010-12-31")).mean()
+    anom_ref = temp_ref - clim
+    
     temp_arctic = ds[varname].where(ds[latname]>=latitude_threshold).weighted(weights).mean((lonname, latname)).squeeze()
-    
-    # dtype = ds.time.values.dtype
-    
-    # if dtype =='datetime64[ns]':
+    clim = temp_arctic.sel(time=slice("1981-01-01", "2010-12-31")).mean()
+    anom_arctic = temp_arctic - clim
+
     index = pd.to_datetime(ds.time.values).year
-    # elif (dtype == 'float64') | (dtype == 'int32') | (dtype == 'float32'):
-    #     index = ds.time.values.astype(int)
+
     
     df = pd.DataFrame(index=index, columns=['Reference temperature', 'Arctic temperature'])
     
-    df['Reference temperature'] = temp_ref
-    df['Arctic temperature'] = temp_arctic
+    df['Reference temperature'] = anom_ref
+    df['Arctic temperature'] = anom_arctic
     
 
     return df
