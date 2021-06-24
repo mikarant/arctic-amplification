@@ -13,15 +13,45 @@ from scipy import stats
 from cdo import *
 cdo = Cdo()
 
+def get_sia_trend(sia_file, varname, period, factor):
+    
+    ds = xr.open_dataset(sia_file)
+    obs = ds[varname].sel(time=slice(str(period[0])+"-01-01", str(period[1])+"-12-31")).squeeze()*factor
+    clim = obs.sel(time=slice("1981-01-01", "2010-12-31")).mean()
+    obs_anom = obs-clim
+    
+    idx = np.isfinite(obs_anom.values)
+    slope_sia, _, _, p_value_sia, stderr = stats.linregress(np.arange(period[0],period[1]+1)[idx], obs_anom.values[idx])
+    
+    return slope_sia, obs.values, stderr
 
+def get_sia_area(sia_file, varname, factor):
+    
+    ds = xr.open_dataset(sia_file)
+    obs = ds[varname].sel(time=slice("1979-01-01", "2018-12-31")).squeeze()*factor
+
+    idx = np.isfinite(obs.values)
+
+    mean_sia = np.mean(obs.values[idx])
+    
+    return mean_sia
 
 def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
+
+    import pymannkendall as mk
+    
 
     Nsamples = 100000
 
     
     f = temp_ref[obsname][yrange]
     f_a = temp_arctic[obsname][yrange]
+    
+    result = mk.original_test(f,alpha=0.05)
+    result_a = mk.original_test(f_a,alpha=0.05)
+    if (result.trend != 'increasing') or (result_a.trend != 'increasing'):
+        import sys
+        sys.exit('Not statistically significant trends')
     
     slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
     slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
