@@ -1,6 +1,6 @@
 # Arctic amplification
 
-This repository contains codes to calculate Arctic amplification metrics
+This repository contains python- and R-scritps to calculate Arctic amplification metrics and figures
 
 ## The bootstrap confidence intervals
 
