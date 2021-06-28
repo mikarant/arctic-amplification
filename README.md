@@ -3,7 +3,7 @@
 This repository contains python- and R-scritps to calculate Arctic amplification metrics and figures
 
 ## Post process the observational data
-With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics (Rantanen et al. 2021). You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+.
+With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics (Rantanen et al. 2021). You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
 
 
 ### 1. Download manually each observational dataset from their sources
@@ -31,7 +31,7 @@ cdo -sub input test-clim test-anom
 python fix_berkeley_earth_timeaxis.py
 
 
-### The datasets undergone these steps so far are availabe from here: https://fmi100-my.sharepoint.com/:f:/g/personal/mika_rantanen_fmi_fi/Eh57LkCaG1pAqOF1I1pRmzcB39CW13XwkekxLeA7ZZZxmA?e=bbN4Z3
+The four datasets undergone these steps are availabe from here: https://fmi100-my.sharepoint.com/:f:/g/personal/mika_rantanen_fmi_fi/Eh57LkCaG1pAqOF1I1pRmzcB39CW13XwkekxLeA7ZZZxmA?e=bbN4Z3
 
 ### 6. Calculate average of the observational datasets
 cdo -b F32  -ensmean -selyear,1980/2019 -selvar,temperature BEST-regridded-retimed-anom.nc -selyear,1980/2019 -selvar,temperature_anomaly COWTAN-regridded-anom.nc -selyear,1980/2019 -selvar,tempanomaly GISTEMP-regridded-anom.nc -selyear,1980/2019 -selvar,t2m ERA5-regridded-anom.nc GBWE.nc
