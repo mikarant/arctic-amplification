@@ -555,9 +555,9 @@ def plot_fig_4(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_o
     elinewidth = 2.5
     
     ### read cmip5 results
-    cmip5_ref_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_ref.csv',index_col=0)
-    cmip5_arctic_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_arctic.csv',index_col=0)
-    cmip5_ratios = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_ratios.csv',index_col=0)
+    cmip5_ref_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv',index_col=0)
+    cmip5_arctic_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv',index_col=0)
+    cmip5_ratios = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
     
     ### read mpi results
     mpi_aa = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/data_for_fig4.csv')

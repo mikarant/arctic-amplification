@@ -145,9 +145,9 @@ print(str(np.round(df_slope_a.loc[2019].mean(),4)))
 print('Arctic amplification 1980-2019:')
 print(str(np.round(df.loc[2019].mean(),4)))
 
-df_slope.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_ref.csv')
-df_slope_a.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_arctic.csv')
-df.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_ratios.csv')
+df_slope.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv')
+df_slope_a.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv')
+df.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv')
 
 ### observations
 
@@ -308,71 +308,11 @@ plt.legend(ncol=2, loc='upper left',)
 figureName = 'cmip_temp_'+ssp+'_all.png'
    
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
-import sys
-sys.exit()
-diff = df.loc[2019] -df_obs.loc[2019].mean()
-diff.sort_values()
-
-
-a =  pd.DataFrame(df_obs.mean(axis=1)).values
-b = df.loc[2000:2019].astype(float)
 
 
 
 
 
 
-
-
-
-b = pd.DataFrame(df.loc[2000:2099].max(), columns=['aa'], index=df.loc[2019].index)
-maxobs = pd.DataFrame(df_obs.mean(axis=1).max(), columns=['aa'], index=['Observed'])
-maxmean = pd.DataFrame(df.loc[2000:2099].max().mean(), columns=['aa'], index=['CMIP5 mean'])
-
-
-
-
-
-  
-
-
-
-
-aavalues = maxobs.append(maxmean).append(b)
-
-
-plt.figure(figsize=(9,5), dpi=200)
-ax=plt.gca()
-barlist = plt.bar(x=aavalues.index, height=aavalues.values.squeeze(), facecolor='lightblue')
-barlist[0].set_color('r')
-barlist[1].set_color('b')
-plt.xticks( rotation='vertical')
-
-plt.ylabel('Maximum Arctic amplification ratio by 2099\ncalculated with 40-year linear trends')
-figureName = 'max_aa.png'
-plt.ylim(0,5.25)
-plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
-
-
-aa_t = pd.DataFrame(index=df.columns, columns=['aa','T'])
-
-for m in df.columns:
-    aa = df[m].loc[2000:2019]
-    T = temp[m].loc[2000:2019]
-    d_aa, _, _, p_value, stderr = stats.linregress(aa.index, aa.astype(float).values)
-    d_T, _, _, p_value, stderr = stats.linregress(T.index, T.astype(float).values)
-    # max_aa_year = df[m].astype(float).idxmax()
-    # temp_anom = temp[m].loc[max_aa_year]
-    aa_t.loc[m].aa = d_aa
-    aa_t.loc[m].T = d_T
-
-aa = df_obs.mean(axis=1).loc[2000:2019]
-T = obs_anom.loc[2000:2019]
-d_aa, _, _, p_value, stderr = stats.linregress(aa.index, aa.astype(float).values)
-d_T, _, _, p_value, stderr = stats.linregress(T.index, T.astype(float).values)      
-  
-aa_t = aa_t.append(pd.Series({'aa': d_aa, 'T': d_T}, name='Observed'))
-
-aa_t.to_csv('/home/rantanem/Documents/python/data/arctic_warming/'+ ssp+'_dAAdT.csv')
 
 
