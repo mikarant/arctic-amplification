@@ -8,11 +8,7 @@ This script calculates the mean Arctic amplification metric across the CMIP6 mod
 and outputs the data to netcdf file
 """
 import xarray as xr
-# import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
-# import cartopy.crs as ccrs
-# from cartopy.util import add_cyclic_point
 from cdo import *
 cdo = Cdo()
 
