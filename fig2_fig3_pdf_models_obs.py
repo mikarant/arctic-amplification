@@ -115,7 +115,13 @@ for ax in axlist:
         cond = np.sum(hist_aa[i] >= obs_aa)
         prob = np.round(cond/len(hist_aa[i])*100,1)
         n = cond
-    ax.annotate('p = '+str(prob)+' %', (-0.3,0.9))
+    
+    # if the probability is zero, use "almost equal" sign
+    if prob < 0.001:
+        sign = '≈'
+    else:
+        sign = '='
+    ax.annotate('p '+sign+' '+str(prob)+' %', (-0.3,0.9))
     # ax.annotate('n = '+str(n)+' realizations', (-0.3,0.82))
     ax.set_title(titles[i], loc='left')
     ax.set_xlabel('AA', fontsize=fs)
@@ -169,13 +175,7 @@ ax[3].set_xlim(2000,2040)
 ax[3].tick_params(axis='both', which='major', labelsize=fs)
 ax[3].set_title('d) CanESM5',loc='left',  fontsize=fs)
 
-# ax[2].plot(cmip6.index, cmip6[miroc_col], linewidth=0.5, color='grey')
-# ax[2].plot(cmip6.index, cmip6[miroc_col].mean(axis=1), linewidth=1.5, color='k')
-# ax[2].plot(df_obs.index, df_obs.mean(axis=1), color='red')
-# ax[2].set_ylim(-1,5.5)
-# ax[2].set_xlim(2000,2040)
-# ax[2].tick_params(axis='both', which='major', labelsize=fs)
-# ax[2].set_title('b) MIROC6-ES2L',loc='left',  fontsize=fs)
+
 
 ax[0].legend(handles=obs_plot, loc='upper center', bbox_to_anchor=(0.55, 1.02),
                      edgecolor='none', ncol=3, fontsize=fs)
