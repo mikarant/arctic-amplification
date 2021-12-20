@@ -8,6 +8,7 @@ Created on Fri Feb 26 13:18:42 2021
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import xarray as xr
 
 
 
@@ -25,6 +26,12 @@ def plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot):
                  ]
     range_min = 0.05
     range_max = 0.95
+    
+    years = np.arange(1889,2101)
+    plot_years=np.arange(2019, 2020)
+    ind = np.isin(years, plot_years)
+    miroc_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_CanESM5.nc')
+    
 
     xticks = np.arange(1,5)
     fig, axlist= plt.subplots(nrows=2, ncols=1, figsize=(9,7), dpi=200, sharex=True)
@@ -65,13 +72,31 @@ def plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot):
     axlist[0].errorbar(4.95,y, yerr=yerr,
                         fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
     
+    miroc_ratios_plot=miroc_ds.arctic_trend[:,ind].values.squeeze()
+    y = np.mean(miroc_ratios_plot)
+    ymin = y - np.quantile(miroc_ratios_plot, range_min)
+    ymax =  np.quantile(miroc_ratios_plot, range_max) - y
+    yerr = [[ymin],[ymax]]
+    
+    axlist[0].errorbar(5.95,y, yerr=yerr,
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+    
     
     y = df_slope.loc[2019].mean(axis=0)*10
     ymin = y - df_slope.quantile(range_min, axis=1)[2019]*10
     ymax =  df_slope.quantile(range_max, axis=1)[2019]*10 - y
     yerr = [[ymin],[ymax]]
     axlist[1].errorbar(5.05, y, yerr=yerr,
-                       fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(1))
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(1))
+    
+    miroc_ratios_plot=miroc_ds.global_trend[:,ind].values.squeeze()
+    y = np.mean(miroc_ratios_plot)
+    ymin = y - np.quantile(miroc_ratios_plot, range_min)
+    ymax =  np.quantile(miroc_ratios_plot, range_max) - y
+    yerr = [[ymin],[ymax]]
+    
+    axlist[1].errorbar(5.95,y, yerr=yerr,
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(1))
 
 
     from matplotlib.offsetbox import AnchoredText
@@ -93,7 +118,7 @@ def plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot):
     plt.xticks(np.append(xticks,(5)),labels=longnames  + ['CMIP6\nmean'], fontsize=14)
     axlist[0].set_title('Temperature trends in '+season+ ' season', fontsize=18)
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'trends_obs_vs_models.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
@@ -115,9 +140,9 @@ def plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, 
     range_max = 0.95
     
     ### read cmip5 results
-    cmip5_ref_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_ref.csv',index_col=0)
-    cmip5_arctic_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_trends_arctic.csv',index_col=0)
-    cmip5_ratios = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5_ratios.csv',index_col=0)
+    cmip5_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv',index_col=0)
+    cmip5_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv',index_col=0)
+    cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
     
 
     xticks = np.arange(1,5)
@@ -207,7 +232,7 @@ def plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, 
     yerr = [[ymin],[ymax]]
     
     axlist[1].errorbar(6, y, yerr=yerr,
-                       fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
+                        fmt='o', capsize=5, capthick=2, elinewidth=3, c=cmap(0))
 
 
     
@@ -220,13 +245,13 @@ def plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, 
 
     plt.subplots_adjust(hspace=0.3)
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'aa_obs_vs_models.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
     
-def trend_plot_2d(df_trends, df_err, df_slope_a, df_slope):
+def trend_plot_2d(df_trends, df_err, df_slope_a, df_slope, label):
     
     x = df_slope.loc[2019].astype(float).values*10
     y = df_slope_a.loc[2019].astype(float).values*10
@@ -244,7 +269,7 @@ def trend_plot_2d(df_trends, df_err, df_slope_a, df_slope):
                  fmt='o', capsize=4, capthick=1, elinewidth=1, c='k',
                  label='Observations')
 
-    plt.scatter(df_slope.loc[2019]*10,df_slope_a.loc[2019]*10,c='g', s=50, label='CMIP6 models')
+    plt.scatter(df_slope.loc[2019]*10,df_slope_a.loc[2019]*10,c='g', s=50, label=label)
     ax.plot(px,p(px),"g--")
     
     plt.xlabel('Global warming trend [K per decade]', fontsize=14)
@@ -304,7 +329,7 @@ def sia_tas_scatter(df_slope_sic, df_slope_a, df_trends, sia_slopes, sia_trend_e
     ax.annotate('a)', xy=(0.48, 0.93), xycoords='figure fraction', fontsize=fs+4, fontweight='bold')
 
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'tas_sia_trends.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
@@ -312,7 +337,7 @@ def sia_tas_scatter(df_slope_sic, df_slope_a, df_trends, sia_slopes, sia_trend_e
 def sia_aa_scatter(df_slope_sic, df, df_obs, sia_slopes, df_slope, df_trends, sia_trend_errs):
     
     ### read errorbars for maximum AA
-    max_err = pd.read_csv('/home/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19792018.csv',index_col=0 )
+    max_err = pd.read_csv('/Users/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19792018.csv',index_col=0 )
     max_err_min = max_err['ratio'] - max_err['CIlowerPercentile']
     max_err_max = max_err['CIupperPercentile'] - max_err['ratio']
     
@@ -386,7 +411,7 @@ def sia_aa_scatter(df_slope_sic, df, df_obs, sia_slopes, df_slope, df_trends, si
     plt.ylabel('Maximum Arctic amplification ', fontsize=fs)
     ax.annotate('b)', xy=(0.45, 0.93), xycoords='figure fraction', fontsize=fs+4, fontweight='bold')
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'tas_sia_aa.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
@@ -470,7 +495,7 @@ def meansia_aa_scatter(df, df_slope_sic, df_obs, mean_sic, sia_areas, sia_standa
     ax.annotate('c)', xy=(0.45, 0.93), xycoords='figure fraction', fontsize=fs+4, fontweight='bold')
 
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'max_aa_vs_mean_sia.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
@@ -529,7 +554,7 @@ def meansia_siatrend_scatter(df, df_slope_sic, df_obs, mean_sic, sic_obs, slope_
     ax.annotate('c)', xy=(0.5, 0.93), xycoords='figure fraction', fontsize=fs+4, fontweight='bold')
 
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'mean_sia_trend_vs_mean_sia.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
@@ -555,15 +580,15 @@ def plot_fig_4(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_o
     elinewidth = 2.5
     
     ### read cmip5 results
-    cmip5_ref_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv',index_col=0)
-    cmip5_arctic_trends = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv',index_col=0)
-    cmip5_ratios = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
+    cmip5_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv',index_col=0)
+    cmip5_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv',index_col=0)
+    cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
     
     ### read mpi results
-    mpi_aa = pd.read_csv('/home/rantanem/Documents/python/data/arctic_warming/data_for_fig4.csv')
+    mpi_aa = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/data_for_fig4.csv')
     
     ### read errorbars for maximum
-    max_err = pd.read_csv('/home/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19792018.csv',index_col=0 )
+    max_err = pd.read_csv('/Users/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19792018.csv',index_col=0 )
     max_err_min = max_err['ratio'] - max_err['CIlowerPercentile']
     max_err_max = max_err['CIupperPercentile'] - max_err['ratio'] 
 
@@ -768,9 +793,389 @@ def plot_fig_4(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_o
     axlist[0].annotate('a)', xy=(-0.2, 0.5), xycoords='axes fraction', fontsize=14, fontweight='bold')
     axlist[1].annotate('b)', xy=(-0.2, 0.5), xycoords='axes fraction', fontsize=14, fontweight='bold')
 
-    figurePath = '/home/rantanem/Documents/python/figures/'
+    figurePath = '/Users/rantanem/Documents/python/figures/'
     figureName = 'aa_obs_vs_models.png'
   
     plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
 
+def plot_pdf(df, df_obs, year):
+    
+    from matplotlib.lines import Line2D
+    fs =14
+    
+    ### read mpi results
+    mpi_aa = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/data_for_fig4.csv')
+    
+    simulated_aa = df.loc[year]
+    observed_aa = df_obs.loc[2019]
+
+    fig, axlist= plt.subplots(nrows=1, ncols=2, figsize=(12,5), dpi=200, sharex=False)
+    
+    weights = np.ones_like(simulated_aa) / (len(simulated_aa))
+    axlist[0].hist(simulated_aa, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,5,0.33333), density=True, label='CMIP6')
+    axlist[0].hist(mpi_aa.AA, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.33333), 
+                   density=True,histtype='step',linewidth=1.5, label='MPI-GE')
+    handles, labels = axlist[0].get_legend_handles_labels()
+    new_handles = [Line2D([], [], c=h.get_edgecolor()) for h in handles]
+    axlist[0].axvline(x=df_obs.loc[2019].mean(), color='g' ,linewidth=2)
+
+    
+    axlist[0].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[0].set_ylabel('Density', fontsize=fs)
+    axlist[0].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[0].set_title('a) 40-year Arctic amplification 1980-2019',loc='left',  fontsize=fs)
+    
+    
+    simulated_aa = df.loc[2010:2040].to_numpy().flatten().astype(float)
+    observed_aa = df_obs.loc[2010:2040].max()
+    
+    axlist[1].hist(simulated_aa, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,5,0.33333), density=True,
+                   label='CMIP6')
+    # axlist[1].hist(mpi_aa.AA_max, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.3333), density=True,
+    #                histtype='step',linewidth=1.5,label='MPI-GE')
+    axlist[1].hist(df_obs.loc[2010:2040].to_numpy().flatten(), edgecolor='red', facecolor='none', bins=np.arange(2,5,0.3333), 
+                   density=True,histtype='step',linewidth=1.5,label='MPI-GE')
+    
+
+    axlist[1].axvline(x=df_obs.loc[2018].mean(), color='g', linewidth=2)
+        
+    handles, labels = axlist[1].get_legend_handles_labels()
+    
+    axlist[1].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[1].set_ylabel('Density', fontsize=fs)
+    axlist[1].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[1].set_title('b) all 40-year periods ending in 2010-2040',loc='left',  fontsize=fs)
+    
+    new_handles.append(handles[1])
+    
+    labels=['CMIP6', 'MPI-GE', 'Observations', ]
+    axlist[0].legend(handles=new_handles, labels=labels, loc='upper center', bbox_to_anchor=(0.6, 1.19),
+                     edgecolor='none', ncol=3, fontsize=fs)
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_pdf.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+    
+def plot_pdf_ens(df_obs, year):
+    
+    from matplotlib.lines import Line2D
+    fs =14
+    plot_years=np.arange(year, year+1)
+    
+    years = np.arange(1889,2100)
+    ind = np.isin(years, plot_years)
+    mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM.nc')
+    mpi_ratios_plot=mpi_ds.aa.values[:,ind].squeeze()
+    
+    observed_aa = df_obs.loc[year]
+
+    fig, axlist= plt.subplots(nrows=1, ncols=3, figsize=(12,5), dpi=200, sharey=True)
+    
+    axlist[0].hist(mpi_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,5,0.33333), density=True)
+    axlist[0].axvline(x=observed_aa.mean(), color='g' ,linewidth=2, label='Observations')
+    axlist[0].set_xlim(1,5)
+    axlist[0].set_ylim(0,1.1)
+    axlist[0].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[0].set_ylabel('Density', fontsize=fs)
+    axlist[0].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[0].set_title('a) MPI-GE',loc='left',  fontsize=fs)
+    
+    
+    years = np.arange(1889,2101)
+    ind = np.isin(years, plot_years)
+    canesm_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_CanESM5.nc')
+    canesm_ratios_plot=canesm_ds.aa.values[:,ind]
+    
+    axlist[1].hist(canesm_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,5,0.33333), density=True,
+                   )
+    # axlist[1].hist(mpi_aa.AA_max, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.3333), density=True,
+    #                histtype='step',linewidth=1.5,label='MPI-GE')
+    # axlist[1].hist(df_obs.loc[2010:2040].to_numpy().flatten(), edgecolor='red', facecolor='none', bins=np.arange(2,5,0.3333), 
+    #                density=True,histtype='step',linewidth=1.5,label='MPI-GE')
+    
+
+    axlist[1].axvline(x=observed_aa.mean(), color='g', linewidth=2)
+        
+    handles, labels = axlist[1].get_legend_handles_labels()
+    
+    axlist[1].set_xlim(1,5)
+    axlist[1].set_ylim(0,1.1)
+    axlist[1].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[1].set_ylabel('Density', fontsize=fs)
+    axlist[1].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[1].set_title('b) CanESM5',loc='left',  fontsize=fs)
+
+    ind = np.isin(years, plot_years)
+    miroc_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MIROC6.nc')
+    miroc_ratios_plot=miroc_ds.aa.values[:,ind]
+    
+    axlist[2].hist(miroc_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,5,0.33333), density=True,
+                   )
+    # axlist[1].hist(mpi_aa.AA_max, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.3333), density=True,
+    #                histtype='step',linewidth=1.5,label='MPI-GE')
+    # axlist[1].hist(df_obs.loc[2010:2040].to_numpy().flatten(), edgecolor='red', facecolor='none', bins=np.arange(2,5,0.3333), 
+    #                density=True,histtype='step',linewidth=1.5,label='MPI-GE')
+    
+
+    axlist[2].axvline(x=observed_aa.mean(), color='g', linewidth=2)
+        
+
+    axlist[2].set_ylim(0,1.1)
+    axlist[2].set_xlim(1,5)
+    axlist[2].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[2].set_ylabel('Density', fontsize=fs)
+    axlist[2].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[2].set_title('c) MIROC6',loc='left',  fontsize=fs)
+    
+    
+    axlist[0].legend(loc='upper center', bbox_to_anchor=(0.3, 1.19),
+                      edgecolor='none', ncol=3, fontsize=fs)
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_pdf_ens.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+    
+def plot_pdf_ens_time_range(df_obs, year, time_range_start_year, time_range_end_year):
+    
+    xlim=(0,5.5)
+    
+    from matplotlib.lines import Line2D
+    fs =14
+    plot_years=np.arange(time_range_start_year, time_range_end_year+1)
+    
+    years = np.arange(1889,2100)
+    ind = np.isin(years, plot_years)
+    mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM.nc')
+    mpi_ratios_plot=mpi_ds.aa.values[:,ind].squeeze().ravel()
+    
+    observed_aa = df_obs.loc[year]
+
+    fig, axlist= plt.subplots(nrows=1, ncols=3, figsize=(12,5), dpi=200, sharey=True)
+    
+    axlist[0].hist(mpi_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,6,0.33333), density=True)
+    axlist[0].axvline(x=observed_aa.mean(), color='g' ,linewidth=2, label='Observations')
+    axlist[0].set_xlim(xlim)
+    axlist[0].set_ylim(0,1.1)
+    axlist[0].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[0].set_ylabel('Density', fontsize=fs)
+    axlist[0].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[0].set_title('a) MPI-GE',loc='left',  fontsize=fs)
+    
+    
+    years = np.arange(1889,2101)
+    ind = np.isin(years, plot_years)
+    canesm_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_CanESM5.nc')
+    canesm_ratios_plot=canesm_ds.aa.values[:,ind].squeeze().ravel()
+    
+    axlist[1].hist(canesm_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,6,0.33333), density=True,
+                   )
+    # axlist[1].hist(mpi_aa.AA_max, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.3333), density=True,
+    #                histtype='step',linewidth=1.5,label='MPI-GE')
+    # axlist[1].hist(df_obs.loc[2010:2040].to_numpy().flatten(), edgecolor='red', facecolor='none', bins=np.arange(2,5,0.3333), 
+    #                density=True,histtype='step',linewidth=1.5,label='MPI-GE')
+    
+
+    axlist[1].axvline(x=observed_aa.mean(), color='g', linewidth=2)
+        
+    handles, labels = axlist[1].get_legend_handles_labels()
+    
+    axlist[1].set_xlim(xlim)
+    axlist[1].set_ylim(0,1.1)
+    axlist[1].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[1].set_ylabel('Density', fontsize=fs)
+    axlist[1].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[1].set_title('b) CanESM5',loc='left',  fontsize=fs)
+
+    ind = np.isin(years, plot_years)
+    miroc_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MIROC6.nc')
+    miroc_ratios_plot=miroc_ds.aa.values[:,ind].squeeze().ravel()
+    
+    axlist[2].hist(miroc_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(0,6,0.33333), density=True,
+                   )
+    # axlist[1].hist(mpi_aa.AA_max, edgecolor='cornflowerblue', facecolor='none', bins=np.arange(0,5,0.3333), density=True,
+    #                histtype='step',linewidth=1.5,label='MPI-GE')
+    # axlist[1].hist(df_obs.loc[2010:2040].to_numpy().flatten(), edgecolor='red', facecolor='none', bins=np.arange(2,5,0.3333), 
+    #                density=True,histtype='step',linewidth=1.5,label='MPI-GE')
+    
+
+    axlist[2].axvline(x=observed_aa.mean(), color='g', linewidth=2)
+        
+
+    axlist[2].set_ylim(0,1.1)
+    axlist[2].set_xlim(xlim)
+    axlist[2].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[2].set_ylabel('Density', fontsize=fs)
+    axlist[2].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[2].set_title('c) MIROC6',loc='left',  fontsize=fs)
+    
+    
+    axlist[0].legend(loc='upper center', bbox_to_anchor=(0.3, 1.19),
+                      edgecolor='none', ncol=3, fontsize=fs)
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_pdf_ens_time_range.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+    
+def plot_pdf_cmip_time_range(df, df_obs, year, time_range_start_year, time_range_end_year):
+    
+    xlim=(-1,5.5)
+    ylim=(0,0.85)
+    
+  
+    fs =14
+
+    
+    cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
+
+    cmip5_ratios_plot=cmip5_ratios.loc[time_range_start_year:time_range_end_year].values.ravel()
+    
+    observed_aa = df_obs.loc[year]
+
+    fig, axlist= plt.subplots(nrows=1, ncols=2, figsize=(10,4), dpi=200, sharey=True)
+    
+    axlist[0].hist(cmip5_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(-1,6,0.33333), density=True)
+    axlist[0].axvline(x=observed_aa.mean(), color='g' ,linewidth=2, label='Observations')
+    axlist[0].set_xlim(xlim)
+    axlist[0].set_ylim(ylim)
+    axlist[0].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[0].set_ylabel('Density', fontsize=fs)
+    axlist[0].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[0].set_title('a) CMIP5',loc='left',  fontsize=fs)
+    
+    
+
+    cmip6_ratios_plot=df.loc[time_range_start_year:time_range_end_year].values.ravel()
+    
+    axlist[1].hist(cmip6_ratios_plot, facecolor='darkgrey', edgecolor='k', bins=np.arange(-1,6,0.33333), density=True,
+                   )
+    axlist[1].axvline(x=observed_aa.mean(), color='g', linewidth=2)
+        
+    handles, labels = axlist[1].get_legend_handles_labels()
+    
+    axlist[1].set_xlim(xlim)
+    axlist[1].set_ylim(ylim)
+    axlist[1].set_xlabel('Arctic amplification', fontsize=fs)
+    axlist[1].set_ylabel('Density', fontsize=fs)
+    axlist[1].tick_params(axis='both', which='major', labelsize=fs)
+    axlist[1].set_title('b) CMIP6',loc='left',  fontsize=fs)
+
+
+    
+    axlist[0].legend(loc='upper center', bbox_to_anchor=(0.29, 1.02),
+                      edgecolor='none', ncol=3, fontsize=fs)
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_pdf_cmip_time_range.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')   
+    
+def plot_time_series_cmip(df, df_obs):
+    
+    fs =14
+    years=np.arange(2000, 2041)
+    df_plot=df.loc[years]
+    
+    fig, ax= plt.subplots(nrows=1, ncols=2, figsize=(10,4), dpi=200, sharex=False)
+    
+    cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
+    cmip5_ratios_plot=cmip5_ratios.loc[years]
+    
+    ax[0].plot(cmip5_ratios_plot.index, cmip5_ratios_plot, linewidth=0.5, color='grey')
+    ax[0].plot(cmip5_ratios_plot.index, cmip5_ratios_plot.mean(axis=1), linewidth=1.5, color='k')
+    
+    obs_plot = ax[0].plot(df_obs.index, df_obs.mean(axis=1), color='red', label='Observations')
+    ax[0].set_xlim(years[0], years[-1])
+    ax[0].set_ylabel('Arctic amplification', fontsize=fs)
+    ax[0].tick_params(axis='both', which='major', labelsize=fs)
+    ax[0].set_ylim(-1,5.5)
+    ax[0].set_title('a) CMIP5',loc='left',  fontsize=fs)
+    
+    ax[0].legend(handles=obs_plot, loc='upper center', bbox_to_anchor=(0.7, 1.),
+                     edgecolor='none', ncol=3, fontsize=fs)
+    
+    
+    
+    ax[1].plot(df_plot.index, df_plot, linewidth=0.5, color='grey')
+    ax[1].plot(df_plot.index, df_plot.mean(axis=1), linewidth=1.5, color='k')
+    
+    ax[1].plot(df_obs.index, df_obs.mean(axis=1), color='red')
+    ax[1].set_xlim(years[0], years[-1])
+    ax[1].set_ylabel('Arctic amplification', fontsize=fs)
+    ax[1].tick_params(axis='both', which='major', labelsize=fs)
+    ax[1].set_ylim(-1,5.5)
+    ax[1].set_title('b) CMIP6',loc='left',  fontsize=fs)
+    
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_timeser.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+    
+def plot_time_series_ens(df_obs):
+    
+    
+    fs =14
+    plot_years=np.arange(2000, 2041)
+    
+    fig, ax= plt.subplots(nrows=1, ncols=3, figsize=(12,5), dpi=200, sharex=False)
+    
+    years = np.arange(1889,2100)
+    ind = np.isin(years, plot_years)
+    mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM.nc')
+    mpi_ratios_plot=mpi_ds.aa.values[:,ind]
+    
+    for m in np.arange(0, np.shape(mpi_ratios_plot)[0]):
+        ax[0].plot(plot_years, mpi_ratios_plot[m,:], linewidth=0.5, color='grey')
+    ax[0].plot(plot_years, np.mean(mpi_ratios_plot, axis=0), linewidth=1.5, color='k')
+    
+    obs_plot = ax[0].plot(df_obs.index, df_obs.mean(axis=1), color='red', label='Observations')
+    ax[0].set_xlim(plot_years[0], plot_years[-1])
+    ax[0].set_ylabel('Arctic amplification', fontsize=fs)
+    ax[0].tick_params(axis='both', which='major', labelsize=fs)
+    ax[0].set_ylim(-0.5,5)
+    ax[0].set_title('a) MPI-GE',loc='left',  fontsize=fs)
+    
+    ax[0].legend(handles=obs_plot, loc='upper center', bbox_to_anchor=(0.6, 1.),
+                     edgecolor='none', ncol=3, fontsize=fs)
+    
+    years = np.arange(1889,2101)
+    ind = np.isin(years, plot_years)
+    canesm_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_CanESM5.nc')
+    canesm_ratios_plot=canesm_ds.aa.values[:,ind]
+    
+    for m in np.arange(0, np.shape(canesm_ratios_plot)[0]):
+        ax[1].plot(plot_years, canesm_ratios_plot[m,:], linewidth=0.5, color='grey')
+    ax[1].plot(plot_years, np.mean(canesm_ratios_plot, axis=0), linewidth=1.5, color='k')
+    
+    ax[1].plot(df_obs.index, df_obs.mean(axis=1), color='red')
+    ax[1].set_xlim(plot_years[0], plot_years[-1])
+    ax[1].set_ylabel('Arctic amplification', fontsize=fs)
+    ax[1].tick_params(axis='both', which='major', labelsize=fs)
+    ax[1].set_ylim(-0.5,5)
+    ax[1].set_title('b) CanESM5',loc='left',  fontsize=fs)
+    
+    miroc_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MIROC6.nc')
+    miroc_ratios_plot=miroc_ds.aa.values[:,ind]
+    
+    for m in np.arange(0, np.shape(miroc_ratios_plot)[0]):
+        ax[2].plot(plot_years, miroc_ratios_plot[m,:], linewidth=0.5, color='grey')
+    ax[2].plot(plot_years, np.mean(miroc_ratios_plot, axis=0), linewidth=1.5, color='k')
+    
+    ax[2].plot(df_obs.index, df_obs.mean(axis=1), color='red')
+    ax[2].set_xlim(plot_years[0], plot_years[-1])
+    ax[2].set_ylabel('Arctic amplification', fontsize=fs)
+    ax[2].tick_params(axis='both', which='major', labelsize=fs)
+    ax[2].set_ylim(-0.5,5)
+    ax[2].set_title('c) MIROC6',loc='left',  fontsize=fs)
+    
+    
+    figurePath = '/Users/rantanem/Documents/python/figures/'
+    figureName = 'aa_timeser_large_ensembles.png'
+  
+    plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+
+    
