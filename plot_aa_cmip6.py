@@ -55,11 +55,11 @@ var = 'tas'
 # open model dataset
 if modelGeneration == 'cmip6':
     # import re
-    ssp_path = '/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'
+    ssp_path = '/Users/rantanem/Documents/python/data/arctic_warming/cmip6/'+ssp+'/'
     files = [f for f in listdir(ssp_path) if isfile(join(ssp_path, f))]
     full_files = [ssp_path + f for f in files]
     # models = [re.sub('\.nc','',f) for f in files]
-    models = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/ssp245/MODEL_NAMES.xlsx',
+    models = pd.read_excel('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/ssp245/MODEL_NAMES.xlsx',
                            engine='openpyxl').values.squeeze()
 
     
@@ -194,12 +194,12 @@ for m in mod[:]:
 
 ## calculate observed sea ice trend using ERA5
 # file = '/home/rantanem/Downloads/ecv_seaice/HadISST.2.2.0.0_sea_ice_concentration.nc'
-file = '/home/rantanem/Downloads/ecv_seaice/mean/all.nc'
+file = '/Users/rantanem/Downloads/ecv_seaice/mean/all.nc'
 cdoinput =  ' -fldsum -sellonlatbox,0,360,0,90 -mul -selvar,ci '+file+' -gridarea -selvar,ci '+file
 era5_siafile = cdo.yearmean(input =operator+season+' '+ cdoinput)
 
 ## calculate observed sea ice trend using UHH product
-file = '/home/rantanem/Downloads/SeaIceArea__NorthernHemisphere__monthly__UHH__v2019_fv0.01.nc'
+file = '/Users/rantanem/Downloads/SeaIceArea__NorthernHemisphere__monthly__UHH__v2019_fv0.01.nc'
 sia_file = cdo.yearmean(input=operator+season+' '+file)
 
 
@@ -246,16 +246,16 @@ print(str(np.round(df.loc[2019].mean(),5)))
 ### observations
 
 ## initialize dataframes
-temp_obs_arctic = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets)
-temp_obs_ref = pd.DataFrame(index=np.arange(startYear,2020), columns=obsDatasets)
+temp_obs_arctic = pd.DataFrame(index=np.arange(1950,2020), columns=obsDatasets)
+temp_obs_ref = pd.DataFrame(index=np.arange(1950,2020), columns=obsDatasets)
 
 # loop over datasets
 for o in obsDatasets:
     # get temperatures in the reference area and arctic and put them to the dataframes
     df_temp = fcts.getObsTemps(o, variables[o], latitude_threshold, refarea, operator, season)
     
-    temp_obs_arctic[o] = df_temp.loc[startYear:,'Arctic temperature']
-    temp_obs_ref[o] = df_temp.loc[startYear:,'Reference temperature']
+    temp_obs_arctic[o] = df_temp.loc[1950:,'Arctic temperature']
+    temp_obs_ref[o] = df_temp.loc[1950:,'Reference temperature']
 
 
 # calculate AA ratios for the observational datasets
@@ -284,8 +284,8 @@ print('Observed Arctic amplification 1980-2019:')
 print(str(np.round(df_obs.loc[2019].mean(),5)))
     
 ### export trends in csv-file
-syear = 2020-period
-yrange =  np.arange(syear,2020) 
+syear = 2019-period
+yrange =  np.arange(syear,2019) 
 
 df_trends = pd.DataFrame(index=['Arctic trend', 'Global trend'], columns=obsDatasets)
 df_err = pd.DataFrame(index=['Arctic', 'Global'], columns=obsDatasets)
@@ -314,20 +314,24 @@ for o in obsDatasets:
 #     df_arctic_temps[o] = f_a
 #     df_reference_temps[o] = f
 
+df.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_simulated_aa.csv', index_label='Year')
+df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
+df_err.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors.csv')
 
-df_trends.to_csv('/home/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
-temp_obs_arctic.to_csv('/home/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
-temp_obs_ref.to_csv('/home/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
+temp_obs_arctic.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
+temp_obs_ref.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
 
-### ### read calculated (by Otto) error bounds for cmip6 results
-cmip6_errors = pd.read_csv('/home/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs.csv',index_col=0)
+### ### read calculated (by Otto) error bounds for observational results
+cmip6_errors = pd.read_csv('https://raw.githubusercontent.com/mikarant/arctic-amplification/main/bootstrapCI_temps_obs_19802019.csv',index_col=0)
     
 # replace the calculated values by Otto's bootstrapping work
 df_obs_min.loc[2019] = cmip6_errors['CIlowerPercentile']
 df_obs_max.loc[2019] = cmip6_errors['CIupperPercentile']
 df_obs.loc[2019] = cmip6_errors['ratio']
 
-
+df_obs_min.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_min.csv', index_label='Year')
+df_obs_max.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_max.csv', index_label='Year')
+df_obs.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa.csv', index_label='Year')
 
 
 
@@ -338,11 +342,13 @@ df_obs.loc[2019] = cmip6_errors['ratio']
 
 plots.plot_trends(df_trends, df_err, df_slope_a, df_slope, season, annot=True)
 
-plots.plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_obs_max, df, season, annot=True)
+plots.plot_trends_aa(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_obs_max, df, season, annot=False)
+
+df_slope_new = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_global_trends.csv', index_col=0)
+df_slope_a_new = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_arctic_trends.csv', index_col=0)
 
 
-
-plots.trend_plot_2d(df_trends, df_err, df_slope_a, df_slope)
+plots.trend_plot_2d(df_trends, df_err, df_slope_a_new, df_slope_new, 'CMIP6 models')
 
 
 plots.sia_tas_scatter(df_slope_sic, df_slope_a, df_trends, sia_slopes, sia_trend_errs, df_err)
@@ -354,8 +360,29 @@ plots.meansia_aa_scatter(df, df_slope_sic, df_obs, mean_sic, sia_areas, sia_stan
 plots.plot_fig_4(df_trends, df_err, df_slope_a, df_slope, df_obs, df_obs_min, df_obs_max, df, annot=False)
 
 
-# upper_bondary = df.astype(float).quantile(0.95,axis=1)
-# lower_bondary = df.astype(float).quantile(0.05,axis=1)
+df_new = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa.csv', index_col=0)
+
+
+plots.plot_pdf(df, df_obs, 2019)
+
+plots.plot_pdf_ens(df_obs, 2018)
+
+plots.plot_pdf_ens_time_range(df_obs, 2018, 2000, 2040)
+
+plots.plot_time_series_cmip(df, df_obs)
+
+plots.plot_time_series_ens(df_obs)
+
+
+
+miroc_arctic=pd.DataFrame(data=canesm_ds.arctic_trend[:, -100:].transpose().values.squeeze()/10, 
+                               index=np.arange(2000, 2100))
+
+miroc_global=pd.DataFrame(data=canesm_ds.global_trend[:, -100:].transpose().values.squeeze()/10, 
+                               index=np.arange(2000, 2100))
+
+
+plots.trend_plot_2d(df_trends, df_err, miroc_arctic, miroc_global, 'CanESM5 ensemble')
 
     
 # plt.figure(figsize=(9,6), dpi=200)

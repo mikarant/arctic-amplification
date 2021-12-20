@@ -38,7 +38,7 @@ modelGeneration = 'cmip5'
 
 
 # choose the scenario
-ssp='rcp85'
+ssp='rcp45'
 
 if modelGeneration == 'cmip5':
     ssp = 'rcp85'
@@ -49,7 +49,7 @@ if modelGeneration == 'cmip5':
 var = 'tas'
 
 # open model dataset
-path = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc'
+path = '/Users/rantanem/Documents/python/data/arctic_warming/cmip5/'+ssp+'.nc'
 
 cmip5 = xr.open_dataset(path)
 
@@ -90,7 +90,7 @@ temp = pd.DataFrame(index=cmip_years, columns=mod)
 # loop over all models
 for m in mod[:]:
     print(m)
-    path = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/'+m+'_cmip5.nc'
+    path = '/Users/rantanem/Documents/python/data/arctic_warming/cmip5/'+m+'_cmip5.nc'
     yearmean = cdo.yearmean(input=operator+season+' '+ path)
     rm  = cdo.remapcon('r720x360 -selvar,tas ',input=yearmean, options='-b F32')
     ds = xr.open_dataset(rm)
@@ -145,9 +145,9 @@ print(str(np.round(df_slope_a.loc[2019].mean(),4)))
 print('Arctic amplification 1980-2019:')
 print(str(np.round(df.loc[2019].mean(),4)))
 
-df_slope.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv')
-df_slope_a.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv')
-df.to_csv('/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv')
+df_slope.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv')
+df_slope_a.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv')
+df.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv')
 
 ### observations
 
@@ -196,9 +196,9 @@ for o in obsDatasets:
     df_trends[o]['Arctic trend'] = slope_a
     df_trends[o]['Global trend'] = slope
 
-df_trends.to_csv('/home/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
-df_arctic_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
-df_reference_temps.to_csv('/home/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
+df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
+df_arctic_temps.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
+df_reference_temps.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
 
 ###################################
 # PLOT RESULTS
@@ -242,7 +242,7 @@ plt.scatter(2019, df_obs.mean(axis=1)[2019], s=40, c='r', zorder=5)
 
 plt.legend(ncol=3, loc='upper center',fontsize=14,  bbox_to_anchor=(0.5, 1.1), frameon=False)
 
-figurePath = '/home/rantanem/Documents/python/figures/'
+figurePath = '/Users/rantanem/Documents/python/figures/'
    
 plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
 
