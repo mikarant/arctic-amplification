@@ -69,10 +69,10 @@ def getObsTemps(obsname, varname, latitude_threshold,refarea, operator, season):
  
 
     # variables in observations
-    filenames = {'GISTEMP': '/home/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded.nc',
-                 'BEST': '/home/rantanem/Documents/python/data/arctic_warming/BEST-regridded-retimed.nc',
-                 'COWTAN': '/home/rantanem/Documents/python/data/arctic_warming/COWTAN-regridded.nc',
-                 'ERA5': '/home/rantanem/Documents/python/data/arctic_warming/era5_t2m_1950-2019.nc',
+    filenames = {'GISTEMP': '/Users/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded.nc',
+                 'BEST': '/Users/rantanem/Documents/python/data/arctic_warming/BEST-regridded-retimed.nc',
+                 'COWTAN': '/Users/rantanem/Documents/python/data/arctic_warming/COWTAN-regridded.nc',
+                 'ERA5': '/Users/rantanem/Documents/python/data/arctic_warming/era5_t2m_1950-2019.nc',
                  }
 
     inputfile = filenames[obsname]
