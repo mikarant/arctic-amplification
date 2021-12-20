@@ -60,7 +60,7 @@ datapath = '/home/rantanem/Documents/python/data/arctic_warming/'
 
 files = {'obs': datapath + 'GBWE.nc',
          'cmip5' : datapath + '/cmip5/cmip5_mean.nc', 
-         'cmip6' : datapath + '/cmip6/ssp245/cmip6_mean.nc'}
+         'cmip6' : datapath + '/cmip6/ssp245/cmip6_ssp245_mean.nc'}
 
 variables = {'obs': 't2m',
              'cmip5': 'tas',
