@@ -16,7 +16,7 @@ cdo = Cdo()
 
 scenario = 'ssp245'
 
-model_stats = pd.read_excel('/home/rantanem/Documents/python/data/arctic_warming/cmip6/ssp245/MODEL_NAMES.xlsx', engine='openpyxl')
+model_stats = pd.read_excel('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/ssp245/MODEL_NAMES.xlsx', engine='openpyxl')
 
 
 trendfiles = []
@@ -33,7 +33,7 @@ for m in model_stats.values.squeeze():
     
     print('Calculating '+m+' model')
     
-    filename= '/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+scenario+'/'+str(m)+'.nc'
+    filename= '/Users/rantanem/Documents/python/data/arctic_warming/cmip6/'+scenario+'/'+str(m)+'.nc'
     
      # calculate annual means
     annual_means = cdo.yearmean(input =  '-selyear,'+str(y1)+'/'+str(y2)+' ' + filename)
@@ -68,7 +68,7 @@ aa_std = xr.concat(trendfiles, dim='model').std(dim='model').squeeze()
 aa_trend = xr.concat(trend, dim='model').mean(dim='model').squeeze()
 
 
-ds_name = '/home/rantanem/Documents/python/data/arctic_warming/cmip6/'+scenario+'/'+'cmip6_mean_aa_'+scenario+'.nc'
+ds_name = '/Users/rantanem/Documents/python/data/arctic_warming/cmip6/'+scenario+'/'+'cmip6_mean_aa_'+scenario+'.nc'
 ds_aa = aa_mean.to_dataset(name='aa')
 ds_aa['std'] = aa_std
 ds_aa['trend'] = aa_trend*10
