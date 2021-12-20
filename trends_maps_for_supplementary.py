@@ -63,7 +63,7 @@ def plot_background(ax):
     ax.set_boundary(circle, transform=ax.transAxes)
     return ax
 
-datapath = '/home/rantanem/Documents/python/data/arctic_warming/'
+datapath = '/Users/rantanem/Documents/python/data/arctic_warming/'
 
 files = {'gistemp': datapath + 'GISTEMP.nc',
          'best': datapath + 'BEST.nc',
@@ -211,5 +211,5 @@ cb.set_ticks(labels)
 
 
 
-plt.savefig('/home/rantanem/Documents/python/figures/arctic_trends_supplementary.png',dpi=200,bbox_inches='tight')
+# plt.savefig('/Users/rantanem/Documents/python/figures/arctic_trends_supplementary.png',dpi=200,bbox_inches='tight')
 
