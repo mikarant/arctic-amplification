@@ -56,19 +56,13 @@ def plot_background(ax):
 
 datapath = '/home/rantanem/Documents/python/data/arctic_warming/'
 
-files = {'obs': datapath + 'GBWE.nc',
-         'cmip5' : datapath + '/cmip5/cmip5_mean.nc', 
-         'cmip6' : datapath + '/cmip6/ssp245/cmip6_mean.nc'}
+files = {'obs': datapath + 'GBWE.nc'}
 
-variables = {'obs': 't2m',
-             'cmip5': 'tas',
-             'cmip6': 'tas',
-             }
+variables = {'obs': 't2m'}
 
 lons = {'obs': 'lon',
         'cmip5': 'lon',
-        'cmip6': 'lon',
-        }
+        'cmip6': 'lon',}
 
 lats = {'obs': 'lat',
         'cmip5': 'lat',
