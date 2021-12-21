@@ -11,21 +11,14 @@ import xarray as xr
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
-from copy import copy
-from matplotlib import cm  
-from matplotlib.colors import ListedColormap  
 from cartopy.util import add_cyclic_point
-import pandas as pd
 from scipy import stats
 
 
 def plotMap():
 
-    #import cartopy.feature as cfeature
-
     #Set the projection information
     proj = ccrs.NorthPolarStereo()
-    # proj = ccrs.LambertConformal(central_longitude=18.0,central_latitude=53, standard_parallels=[53])
     #Create a figure with an axes object on which we will plot. Pass the projection to that axes.
     fig, axarr = plt.subplots(nrows=1, ncols=4, figsize=(15, 6), constrained_layout=False, dpi=200,
                           subplot_kw={'projection': proj})
@@ -40,10 +33,10 @@ def plot_background(ax):
     import cartopy.feature as cfeature
     import matplotlib.path as mpath    
     import matplotlib.ticker as mticker
+    
     ax.patch.set_facecolor('w')
     ax.spines['geo'].set_edgecolor('k')
     
-    # ax.set_extent([40, 0, 54, 70])
     ax.set_extent([-180, 180, 50,90], crs=ccrs.PlateCarree())
     # ax.add_feature(cfeature.LAND.with_scale('110m'),facecolor=cfeature.COLORS['land'])
     # ax.add_feature(cfeature.LAKES.with_scale('50m'),facecolor=cfeature.COLORS['land'],zorder=1,edgecolor='k',linewidth=1.5) 
@@ -95,19 +88,22 @@ titles = {'gistemp': 'a) Gistemp',
         }
 trendfiles = {}
 
-# years = np.arange(1979, 2020, 1)
+# define the starting and ending years of the trend
+syear = 1980
+eyear = 2019
+years = np.arange(syear, eyear+1, 1)
 
 for ff in files:
-    print(ff)
+    print('Calculating trends for '+ff)
     # calculate annual means
-    annual_means = cdo.yearmean(input =  "-selyear,1980/2019 -sellonlatbox,0,360,45,90 " + files[ff])
+    annual_means = cdo.yearmean(input =  "-selyear,"+str(syear)+"/"+str(eyear)+" -sellonlatbox,0,360,45,90 " + files[ff])
 
+    # open the dataset
     ds = xr.open_dataset(annual_means)
     
     f = ds[variables[ff]]
-
-    years = np.arange(1980,2020,1)
     
+    # allocate data arrays
     slopes = np.zeros((len(f[lats[ff]]), len(f[lons[ff]])))
     pvals = np.zeros((len(f[lats[ff]]), len(f[lons[ff]])))
     
@@ -115,14 +111,15 @@ for ff in files:
     for j in range(0,len(f[lats[ff]])):
         ii=0
         for i in range(0,len(f[lons[ff]])):
-            # vals = f.sel(lon=i, lat=j).values
             vals = f[:,j,i].values
+            # calculate linear trends at each grid point
             slope, _, _, p_value, _ = stats.linregress(years, vals)
             slopes[j,i] = slope
             pvals[j,i] = p_value
             ii += 1
         jj += 1
     
+    # mask non-significant trends
     mask = pvals < 0.05
     slopes[~mask] = np.nan
     
@@ -131,41 +128,6 @@ for ff in files:
 
     trendfiles[ff] = slopes_da
     
-    # print(global_mean)
-    
-
-# ##  replace ratio of means by mean of ratios
-# trendfiles['cmip5'] = '/home/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_mean_aa.nc'
-# variables['cmip5'] = 'aa'
-
-# mpidata = datapath + 'data_for_fig2_3.nc'
-# da = xr.open_dataset(mpidata).trend/10
-# trendfiles['mpi'] = da
-# variables['mpi'] = 'trend'
-# lons['mpi'] = 'longitude'
-# lats['mpi'] = 'latitude'
-# titles['mpi'] = 'd) MPI-GE mean'
-
-
-
-
-# colormap
-Reds = cm.get_cmap('Reds', 12)
-Blues = cm.get_cmap('Blues', 10)
-newcolors = Reds(np.linspace(0, 1, 12))
-# newcolors[0, :] = Blues(0.9)
-newcolors[0, :] = Blues(0.8)
-newcolors[1, :] = Blues(0.2)
-for ii in range(2, 12, 2):
-    newcolors[ii, :] = newcolors[ii + 1, :]
-newcolors = np.vstack((newcolors, newcolors[-1], newcolors[-1]))
-newcolors[-2:, :3] = newcolors[-2:, :3] * 0.4
-newcm = ListedColormap(newcolors)
-newcm.set_under(cm.get_cmap('Blues')(0.9), 1.0)
-
-
-# palette = copy(plt.get_cmap('Reds'))
-# palette.set_under('white', 1.0)  # 1.0 represents not transparent
 
 cmin = -1.5
 cmax=  1.5
@@ -180,8 +142,7 @@ fig, axlist = plotMap()
 I = 0
 for ff in trendfiles:
     
-    # ds = xr.open_dataset(trendfiles[ff])
-    print(ff)
+    print('Plotting '+ff)
     ds = trendfiles[ff]
     
     # multiply trend by 10 to get decadal trend
@@ -190,11 +151,9 @@ for ff in trendfiles:
     
     f_new, new_lon = add_cyclic_point(s, coord=ds['lon'])
 
+    # plot the field
     f_contourf = axlist[I].contourf(new_lon, ds['lat'], f_new, levels=f_levels, zorder=2, extend='both', 
                             cmap=newcm, transform = ccrs.PlateCarree())
-    # f_contour = axlist[i].contour(new_lon, f[lats[ff]], f_new.squeeze(), levels=f_levels, zorder=2, colors='k', 
-    #                         linewidths=0.5, transform = ccrs.PlateCarree())
-    # axlist[i].clabel(f_contour, f_levels, inline=True, fontsize=10, fmt='%1.1f')
 
 
     axlist[I].set_title(titles[ff], fontsize=16)
@@ -211,5 +170,5 @@ cb.set_ticks(labels)
 
 
 
-# plt.savefig('/Users/rantanem/Documents/python/figures/arctic_trends_supplementary.png',dpi=200,bbox_inches='tight')
+plt.savefig('/Users/rantanem/Documents/python/figures/arctic_trends_supplementary.png',dpi=200,bbox_inches='tight')
 
