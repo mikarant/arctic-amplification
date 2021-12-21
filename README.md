@@ -39,6 +39,12 @@ cdo -b F32  -ensmean -selyear,1980/2019 -selvar,temperature BEST-regridded-retim
 
 The resulting datafile "GBWE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/ETfOy2lRVZFGlBHMsU7OqncB3gR8SsbARgkH-k43WMhsWA?e=MINx9Z
 
+## Calculate the observed AA ratios and trends
+Run `calculate_observed_aa_trends.py`
+
+## Calculate the CMIP6-simulated AA ratios and trends
+### 1. Merge historical and scenario runs
+Run `merge_hist_scen_cmip6.py`
 
 ## The bootstrap confidence intervals
 
