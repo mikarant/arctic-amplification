@@ -37,9 +37,9 @@ cmip6_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming
 
 
 ### read cmip5 results
-cmip5_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_ref.csv',index_col=0)
-cmip5_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_trends_arctic.csv',index_col=0)
-cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv',index_col=0)
+cmip5_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_global_trends.csv',index_col=0)
+cmip5_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_arctic_trends.csv',index_col=0)
+cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv',index_col=0)
 
 ## read mpi results
 mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM_rcp45.nc')

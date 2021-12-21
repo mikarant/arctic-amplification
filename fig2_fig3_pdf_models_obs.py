@@ -19,7 +19,6 @@ fs =14
 obs_year=2018
 year = np.arange(2010,2041)
 
-# plot_years = np.arange(2000,2040)
 
 mpi_ind_timeser = np.isin(np.arange(1889,2100), np.arange(2000,2041))
 mpi_ind_hist = np.isin(np.arange(1889,2100), np.arange(2010,2041))
@@ -33,7 +32,7 @@ cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_
 cmip6_col = list(cmip6.columns)
 canesm_col = [s for s in cmip6_col if 'CanESM5'.rstrip() in s]
 
-cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_ratios.csv', index_col=0)
+cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv', index_col=0)
 cmip5_ratios_plot=cmip5.loc[year].values.ravel()
 
 mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM_rcp45.nc')
@@ -108,7 +107,7 @@ for ax in axlist:
     ax.set_ylim(0,1.)
     ax.axvline(x=obs_aa, color='r' ,linewidth=2, label='Observations')
     
-    if i==10:
+    if i==1:
         prob = np.round(cmip6_probs.p.mean(),1)
         n = cmip6_probs.n_aa.sum()
     else:
