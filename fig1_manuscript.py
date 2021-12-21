@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 16 23:41:35 2021
+This script plots the figure 1 of the manuscript
 
 @author: rantanem
 """
@@ -23,11 +24,7 @@ def plot_background(ax):
     ax.patch.set_facecolor('w')
     ax.spines['geo'].set_edgecolor('k')
     
-    # ax.set_extent([40, 0, 54, 70])
     ax.set_extent([-180, 180, 50,90], crs=ccrs.PlateCarree())
-    # ax.add_feature(cfeature.LAND.with_scale('110m'),facecolor=cfeature.COLORS['land'])
-    # ax.add_feature(cfeature.LAKES.with_scale('50m'),facecolor=cfeature.COLORS['land'],zorder=1,edgecolor='k',linewidth=1.5) 
-    # ax.add_feature(cfeature.BORDERS.with_scale('50m'), zorder=10)
     ax.add_feature(cfeature.COASTLINE.with_scale('110m'), zorder=10)
     
 
@@ -170,5 +167,5 @@ f8_ax2.annotate('b)',(0,0.97), xycoords='axes fraction', fontsize=17,fontweight=
 f8_ax3.annotate('c)',(0,0.97), xycoords='axes fraction', fontsize=17,fontweight='bold')
 
 
-plt.savefig('/Users/rantanem/Documents/python/figures/draft_fig1.png',dpi=200,bbox_inches='tight')
+plt.savefig('/Users/rantanem/Documents/python/figures/fig1_manuscript.png',dpi=200,bbox_inches='tight')
 
