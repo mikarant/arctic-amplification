@@ -39,9 +39,23 @@ cdo -b F32  -ensmean -selyear,1980/2019 -selvar,temperature BEST-regridded-retim
 
 The resulting datafile "GBWE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/ETfOy2lRVZFGlBHMsU7OqncB3gR8SsbARgkH-k43WMhsWA?e=MINx9Z
 
-
-## The bootstrap confidence intervals
-
+## Calculate the observed AA ratios and trends
+### 1. Calculate the observed values
+Run `calculate_observed_aa_trends.py`
+### 2. Caclulate the bootstrap confidence intervals
 Run `calc_bootstrapCI_temps_obs.R`.
 Inputs `arctic_temps_obs.csv` and `reference_temps_obs.csv`,
 output `bootstrapCI_temps_obs.csv`.
+
+
+
+## Calculate the CMIP6-simulated AA ratios and trends
+### 1. Merge historical and scenario runs
+Run `merge_hist_scen_cmip6.py`
+### 2. Calculate area-mean temperatures in the Arctic and globally
+Run `calculate_temps_cmip6.py`
+### 3. Calculate AA ratios and trends 
+Run `calculate_trends_and_aa_cmip6.py`
+
+
+
