@@ -22,8 +22,7 @@ if(! all(arc$Year == ref$Year)){
   cat("WARNING! Something wrong with the years in the observations??\n")
 }
 
-# I am not sure if all cases are relevant anymore.
-# Should we just get years from the file?
+# so many cases...
 for (mycase in 3) {
   
   if(mycase == 1){
@@ -35,7 +34,7 @@ for (mycase in 3) {
     end.year = 2019
   }
   if(mycase == 3){
-    start.year = 1950
+    start.year = 1979
     end.year = 2021
   }
 
