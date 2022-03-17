@@ -22,7 +22,9 @@ if(! all(arc$Year == ref$Year)){
   cat("WARNING! Something wrong with the years in the observations??\n")
 }
 
-for (mycase in 1:2) {
+# I am not sure if all cases are relevant anymore.
+# Should we just get years from the file?
+for (mycase in 3) {
   
   if(mycase == 1){
     start.year = 1979
@@ -31,6 +33,10 @@ for (mycase in 1:2) {
   if(mycase == 2){
     start.year = 1980
     end.year = 2019
+  }
+  if(mycase == 3){
+    start.year = 1950
+    end.year = 2021
   }
 
   # the first column is the year, other columns are the data for each source
