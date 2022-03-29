@@ -59,38 +59,39 @@ def plot_background(ax):
 datapath = '/Users/rantanem/Documents/python/data/arctic_warming/'
 
 files = {'gistemp': datapath + 'GISTEMP.nc',
-         'best': datapath + 'BEST.nc',
-         'cw': datapath + 'COWTAN.nc',
-         'era5' : datapath + 'era5_t2m_1950-2019.nc'}
+         'best': datapath + 'BEST-retimed.nc',
+         'hadcrut': datapath + 'hadcrut5.nc',
+         'era5' : datapath + 'era5_t2m_1950-2021.nc',
+         }
 
 variables = {'gistemp': 'tempanomaly',
              'best': 'temperature',
-             'cw': 'temperature_anomaly',
+             'hadcrut': 'tas_mean',
              'era5': 't2m',
              }
 
 lons = {'gistemp': 'lon',
         'best': 'longitude',
-        'cw': 'longitude',
+        'hadcrut': 'longitude',
         'era5': 'longitude',
         }
 
 lats = {'gistemp': 'lat',
         'best': 'latitude',
-        'cw': 'latitude',
+        'hadcrut': 'latitude',
         'era5': 'latitude',
         }
 
 titles = {'gistemp': 'a) Gistemp',
         'best': 'b) Berkeley Earth',
-        'cw': 'c) Cowtan & Way',
+        'hadcrut': 'c) HadCRUT5',
         'era5': 'd) ERA5',
         }
 trendfiles = {}
 
 # define the starting and ending years of the trend
-syear = 1980
-eyear = 2019
+syear = 1979
+eyear = 2021
 years = np.arange(syear, eyear+1, 1)
 
 for ff in files:
