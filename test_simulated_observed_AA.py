@@ -13,13 +13,13 @@ import random
 import sys
 
 # Select which model dataset you want to test: CMIP5, CMIP6, MPI-GE or CanESM5
-model='CMIP6'
+model='CMIP5'
 
 # select the ending year of the AA ratio
-year = 2018
+year = 2021
 
 # Select how many repetitions to use to construct the distributions
-n_times = 10000
+n_times = 100000
 
 plot_years=np.arange(year, year+1)
     
@@ -32,7 +32,7 @@ ind = np.isin(years, plot_years)
 # read modelled AA ratios
 
 if model=='CMIP6':
-    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa.csv', index_col=0)
+    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_ann.csv', index_col=0)
     # exlude CanESM5 model from CMIP6
     canesm_col = [s for s in df.columns if 'CanESM5'.rstrip() in s]
     cmip6_without_canesm = [m for m in df.columns if m not in canesm_col]
@@ -45,13 +45,13 @@ if model=='CMIP6':
     models = models[models.Name!='CanESM5']
     models_with_multiple_real = models[models.ssp245>1]
 elif model=='CMIP5':
-    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv',index_col=0)
+    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa_ann.csv',index_col=0)
     aa_ratios=df.loc[year].values.transpose().squeeze()
 elif model=='MPI-GE':
-    ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM_rcp45.nc')
-    aa_ratios=ds.aa.values[:,ind]
+    mpi_df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_aa_ann.csv', index_col=0)
+    aa_ratios=mpi_df.loc[year].values.transpose().squeeze()
 elif model=='CanESM5':
-    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa.csv', index_col=0)
+    df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_ann.csv', index_col=0)
     canesm_col = [s for s in df.columns if 'CanESM5'.rstrip() in s]
     aa_ratios = df[canesm_col].loc[year].values.squeeze().ravel()
 else:
@@ -60,8 +60,8 @@ else:
 
 
 
-## observed AA; 3.87 for 2019, 4.01 for 2018
-AA = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa.csv', index_col=0)
+## observed AA; 
+AA = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
 a = AA.loc[year].mean()
 
 
