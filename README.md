@@ -3,12 +3,12 @@
 This repository contains python- and R-scritps to calculate Arctic amplification metrics and figures
 
 ## Post process the observational data
-With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics (Rantanen et al. 2021). You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
+With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics (Rantanen et al. 2022). You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
 
 
 ### 1. Download manually each observational dataset from their sources
 BEST: http://berkeleyearth.lbl.gov/auto/Global/Gridded/Land_and_Ocean_LatLong1.nc \
-COWTAN: https://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz \
+HadCRUT5: https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc \
 GISTEMP: https://data.giss.nasa.gov/pub/gistemp/gistemp1200_GHCNv4_ERSSTv5.nc.gz \
 ERA5 1950-1978: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means-preliminary-back-extension?tab=overview \
 ERA5 1979-2019: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview \
@@ -34,10 +34,10 @@ python fix_berkeley_earth_timeaxis.py
 The four datasets undergone these steps are availabe from here: https://fmi100-my.sharepoint.com/:f:/g/personal/mika_rantanen_fmi_fi/Eh57LkCaG1pAqOF1I1pRmzcB39CW13XwkekxLeA7ZZZxmA?e=bbN4Z3
 
 ### 6. Calculate average of the observational datasets
-cdo -b F32  -ensmean -selyear,1980/2019 -selvar,temperature BEST-regridded-retimed-anom.nc -selyear,1980/2019 -selvar,temperature_anomaly COWTAN-regridded-anom.nc -selyear,1980/2019 -selvar,tempanomaly GISTEMP-regridded-anom.nc -selyear,1980/2019 -selvar,t2m ERA5-regridded-anom.nc GBWE.nc
+cdo -L -b F32 -ensmean -selyear,1950/2021 -selvar,temperature BEST-regridded-retimed-anom.nc -selyear,1950/2021 -selvar,tas_mean hadcrut5-regridded-anom.nc -selyear,1950/2021 -selvar,tempanomaly GISTEMP-regridded-anom.nc -selyear,1950/2021 -selvar,t2m ERA5-regridded-anom.nc OBSAVE.nc
 
 
-The resulting datafile "GBWE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/ETfOy2lRVZFGlBHMsU7OqncB3gR8SsbARgkH-k43WMhsWA?e=MINx9Z
+The resulting datafile "OBSAVE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/ETfOy2lRVZFGlBHMsU7OqncB3gR8SsbARgkH-k43WMhsWA?e=MINx9Z
 
 ## Calculate the observed AA ratios and trends
 ### 1. Calculate the observed values
