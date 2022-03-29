@@ -26,7 +26,7 @@ mpi = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_a
 
 
 # read cmip6 AA
-cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa_to_present.csv', index_col=0)
+cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_to_present.csv', index_col=0)
 cmip6_col = list(cmip6.columns)
 
 # read CanESM5 model data
