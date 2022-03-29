@@ -37,7 +37,7 @@ The four datasets undergone these steps are availabe from here: https://fmi100-m
 cdo -L -b F32 -ensmean -selyear,1950/2021 -selvar,temperature BEST-regridded-retimed-anom.nc -selyear,1950/2021 -selvar,tas_mean hadcrut5-regridded-anom.nc -selyear,1950/2021 -selvar,tempanomaly GISTEMP-regridded-anom.nc -selyear,1950/2021 -selvar,t2m ERA5-regridded-anom.nc OBSAVE.nc
 
 
-The resulting datafile "OBSAVE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/ETfOy2lRVZFGlBHMsU7OqncB3gR8SsbARgkH-k43WMhsWA?e=MINx9Z
+The resulting datafile "OBSAVE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/EVDgQ5CiLnFBraqzx6S4psYBE0kTL9-bmhmTWCU-RUWA9w?e=bdXUZL
 
 ## Calculate the observed AA ratios and trends
 ### 1. Calculate the observed values
