@@ -10,9 +10,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends.csv', index_col=0)
-df_err = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors.csv', index_col=0)
-df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa.csv', index_col=0)
+df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_ann.csv', index_col=0)
+df_err = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_ann.csv', index_col=0)
+df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
+
+
+#ending year of the trend and AA
+year=2021
 
 
 ## annotations
@@ -22,7 +26,7 @@ annot=False
 cmap = plt.get_cmap("tab10")
 longnames = ['Berkeley\nEarth',
              'Gistemp',
-             'Cowtan &\nWay',
+             'HadCRUT5',
              'ERA5',
              ]
 
@@ -34,7 +38,7 @@ capthick=1
 
 
 ### read errorbars for AA
-max_err = pd.read_csv('/Users/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19802019.csv',index_col=0 )
+max_err = pd.read_csv('/Users/rantanem/Documents/python/arctic-amplification/bootstrapCI_temps_obs_19792021.csv',index_col=0 )
 max_err_min = max_err['ratio'] - max_err['CIlowerPercentile']
 max_err_max = max_err['CIupperPercentile'] - max_err['ratio'] 
 
@@ -64,7 +68,7 @@ axlist[0].set_xticks(xticks)
 axlist[0].set_xticklabels(labels=longnames , fontsize=12)
 axlist[0].set_yticks(np.arange(0,1.3,0.2))
 axlist[0].tick_params(axis='y', which='major', labelsize=14)
-axlist[0].set_ylim(0.1,0.92)
+axlist[0].set_ylim(0.14,0.92)
 
 
 ymin = max_err_min
@@ -73,7 +77,7 @@ ymax = max_err_max
 
 xticks = np.arange(1,5)-0.00
 
-axlist[1].errorbar(xticks, df_obs.loc[2019], yerr=(ymin,ymax), 
+axlist[1].errorbar(xticks, df_obs.loc[year], yerr=(ymin,ymax), 
                     fmt='o', capsize=5, capthick=capthick, elinewidth=elinewidth, c=cmap(0))
 
 
@@ -100,12 +104,12 @@ if annot:
 axlist[1].grid(axis='y')
 axlist[1].set_ylabel('Arctic amplification', fontsize=14)
 
-labels = ['AA 1980-2019',]
+labels = ['AA 1979-2021',]
 axlist[1].legend(handles, labels, fontsize=12, ncol=1, bbox_to_anchor=(1.02, 1.15))
 
 plt.xticks(xticks,labels=longnames, fontsize=12)
-plt.yticks(np.arange(1.0,5,0.5), fontsize=14)
-axlist[1].set_ylim(2.5,4.9)
+plt.yticks(np.arange(1.0,5.5,0.5), fontsize=14)
+axlist[1].set_ylim(3,5)
 
 # increase width between the plots
 plt.subplots_adjust(wspace=0.5)
