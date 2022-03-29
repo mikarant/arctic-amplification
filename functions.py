@@ -10,6 +10,7 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 from scipy import stats
+import pymannkendall as mk 
 from cdo import *
 cdo = Cdo()
 
@@ -36,6 +37,28 @@ def get_sia_area(sia_file, varname, factor):
     
     return mean_sia
 
+def getRatioPresent(temp_ref, temp_arctic, obsname, yrange, period):
+    
+    f = temp_ref[obsname][yrange]
+    f_a = temp_arctic[obsname][yrange]
+    
+    slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
+    slope_a, _, r_value_a, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
+    
+    result = mk.original_test(f.values, alpha=0.05)
+    
+    # constrain AA by global warming rate
+    #if the global warming trend is not statistically singificant according to MK test
+    if result.trend=='increasing':
+        ratio = slope_a/slope
+    else:
+        ratio = np.nan
+        print('NO TREND')
+    
+    return ratio, r_value_a
+    
+    
+
 def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
 
     import pymannkendall as mk
@@ -49,13 +72,14 @@ def getRatioObs(temp_ref, temp_arctic, obsname, yrange, period):
     
     result = mk.original_test(f,alpha=0.05)
     result_a = mk.original_test(f_a,alpha=0.05)
-    if (result.trend != 'increasing') or (result_a.trend != 'increasing'):
-        import sys
-        sys.exit('Not statistically significant trends')
+    
     
     slope, _, _, p_value, stderr = stats.linregress(yrange, f.values)
     slope_a, _, _, p_value_a, stderr_a = stats.linregress(yrange, f_a.values)
     ratio = slope_a/slope
+    
+    if (result.trend != 'increasing') or (result_a.trend != 'increasing'):
+        ratio = np.nan
     
     slope_arctic_samples = slope_a + stderr_a * np.random.randn(Nsamples)
     slope_global_samples = slope + stderr * np.random.randn(Nsamples)
@@ -71,8 +95,8 @@ def getObsTemps(obsname, varname, latitude_threshold,refarea, operator, season):
     # variables in observations
     filenames = {'GISTEMP': '/Users/rantanem/Documents/python/data/arctic_warming/GISTEMP-regridded.nc',
                  'BEST': '/Users/rantanem/Documents/python/data/arctic_warming/BEST-regridded-retimed.nc',
-                 'COWTAN': '/Users/rantanem/Documents/python/data/arctic_warming/COWTAN-regridded.nc',
-                 'ERA5': '/Users/rantanem/Documents/python/data/arctic_warming/era5_t2m_1950-2019.nc',
+                 'HADCRUT': '/Users/rantanem/Documents/python/data/arctic_warming/hadcrut5-regridded.nc',
+                 'ERA5': '/Users/rantanem/Documents/python/data/arctic_warming/era5_t2m_1950-2021.nc',
                  }
 
     inputfile = filenames[obsname]
