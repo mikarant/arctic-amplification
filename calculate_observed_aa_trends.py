@@ -128,11 +128,13 @@ for o in obsDatasets:
 
 
 
-df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_'+month_name+'.csv')
-df_err.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_'+month_name+'.csv')
-df_obs.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_'+month_name+'.csv', index_label='Year')
+df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_1979-2021_'+month_name+'.csv')
+df_err.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_1979-2021_'+month_name+'.csv')
+df_obs.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_'+month_name+'.csv', 
+              index_label='Year', na_rep='NaN')
 
-AA_to_present.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_to_present.csv', index_label='Year')
+AA_to_present.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_to_present.csv', 
+                     index_label='Year', na_rep='NaN')
 
 temp_obs_arctic.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
 temp_obs_ref.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
