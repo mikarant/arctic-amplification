@@ -15,7 +15,7 @@ from cartopy.util import add_cyclic_point
 import xarray as xr
 from matplotlib import cm  
 from matplotlib.colors import ListedColormap
-import scipy as sc 
+from scipy import stats 
 
 def plot_background(ax):
     import cartopy.feature as cfeature
@@ -49,7 +49,7 @@ def plot_linear_trend(ax, syear, eyear, f, c, alpha):
     z = np.polyfit(years[s:e],f[s:e],1)
     p1 = np.poly1d(z)
     
-    slope, intercept, r_value, p_value, std_err = sc.stats.linregress(years[s:e], f[s:e])
+    slope, intercept, r_value, p_value, std_err = stats.linregress(years[s:e], f[s:e])
     
     
     ax.plot(years[s:e],p1(years[s:e]), linewidth=1.5,color=c,alpha=alpha)
@@ -63,15 +63,15 @@ datapath = '/Users/rantanem/Documents/python/data/arctic_warming/'
 temp_obs_arctic = pd.read_csv(datapath + '/arctic_temps_obs.csv',index_col=0)
 temp_obs_ref = pd.read_csv(datapath +'/reference_temps_obs.csv',index_col=0)
 
-ds = xr.open_dataset(datapath +'/GBWE_trend.nc')
+ds = xr.open_dataset(datapath +'/OBSAVE_trend.nc')
 trend_new, new_lon = add_cyclic_point(ds.trend_masked*10, coord=ds['lon'])
 aa_new, new_lon = add_cyclic_point(ds.aa, coord=ds['lon'])
 
 years = temp_obs_ref.index
 
 # range for linear trends
-syear=1980
-eyear=2019
+syear=1979
+eyear=2021
 
 
 # colormap for AA
@@ -106,31 +106,31 @@ f8_ax1 = fig8.add_subplot(gs1[:-1, :])
 f8_ax2 = fig8.add_subplot(gs1[-1, :-1], projection= proj)
 f8_ax3 = fig8.add_subplot(gs1[-1, -1], projection= proj)
 
-f8_ax1.plot(years, temp_obs_ref.BEST, c='b', alpha=0.2,)
-f8_ax1.plot(years, temp_obs_ref.COWTAN, c='r', alpha=0.2, )
+f8_ax1.plot(years, temp_obs_ref.BEST, c='blue', alpha=0.2,)
+f8_ax1.plot(years, temp_obs_ref.HADCRUT, c='red', alpha=0.2, )
 f8_ax1.plot(years, temp_obs_ref.GISTEMP,c='orange', alpha=0.2, )
-f8_ax1.plot(years, temp_obs_ref.ERA5,c='g', alpha=0.2, )
+f8_ax1.plot(years, temp_obs_ref.ERA5,c='green', alpha=0.2, )
 
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.BEST, 'b',alpha=0.2)
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.COWTAN, 'r',alpha=0.2)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.BEST, 'blue',alpha=0.2)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.HADCRUT, 'red',alpha=0.2)
 plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.GISTEMP, 'orange',alpha=0.2)
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.ERA5, 'g',alpha=0.2)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_ref.ERA5, 'green',alpha=0.2)
 
 
-f8_ax1.plot(years, temp_obs_arctic.BEST, c='b', alpha=1,label='Berkeley Earth')
-f8_ax1.plot(years, temp_obs_arctic.COWTAN, c='r', alpha=1,label='Cowtan & Way')
+f8_ax1.plot(years, temp_obs_arctic.BEST, c='blue', alpha=1,label='Berkeley Earth')
+f8_ax1.plot(years, temp_obs_arctic.HADCRUT, c='red', alpha=1,label='HadCRUT5')
 f8_ax1.plot(years, temp_obs_arctic.GISTEMP,c='orange', alpha=1,label='Gistemp')
-f8_ax1.plot(years, temp_obs_arctic.ERA5,c='g', alpha=1,label='ERA5')
+f8_ax1.plot(years, temp_obs_arctic.ERA5,c='green', alpha=1,label='ERA5')
 
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.BEST, 'b',alpha=1)
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.COWTAN, 'r',alpha=1)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.BEST, 'blue',alpha=1)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.HADCRUT, 'red',alpha=1)
 plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.GISTEMP, 'orange',alpha=1)
-plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.ERA5, 'g',alpha=1)
+plot_linear_trend(f8_ax1, syear, eyear, temp_obs_arctic.ERA5, 'green',alpha=1)
 
 
 
 f8_ax1.grid(True)
-f8_ax1.set_xlim(1950,2020)
+f8_ax1.set_xlim(1950,2022)
 f8_ax1.tick_params(axis='both', which='major', labelsize=16)
 f8_ax1.legend(fontsize=14, loc='upper left')
 f8_ax1.set_ylabel('Temperature anomaly [°C]', fontsize=16)
@@ -155,7 +155,7 @@ f_contourf = f8_ax3.contourf(new_lon, ds['lat'], aa_new, levels=np.arange(0,7.5,
 cbar_ax = fig8.add_axes([0.39, 0.088, 0.27, 0.02])
 cb = fig8.colorbar(f_contourf, orientation='horizontal',pad=0.0,fraction=0.0, cax=cbar_ax)
 cb.ax.tick_params(labelsize=14)
-cb.set_label(label='Arctic amplification',fontsize=16)
+cb.set_label(label='Local amplification',fontsize=16)
 labels = np.arange(0,7.5,1)
 cb.set_ticks(labels)
 
