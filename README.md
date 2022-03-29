@@ -1,9 +1,9 @@
 # Arctic amplification
 
-This repository contains python- and R-scritps to calculate Arctic amplification metrics and figures
+This repository contains python- and R-scripts to calculate Arctic amplification metrics and figures presented in Rantanen et al. (2022) manuscript "The Arctic has warmed nearly four times faster than the globe since 1979"
 
 ## Post process the observational data
-With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics (Rantanen et al. 2022). You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
+With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics. You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
 
 
 ### 1. Download manually each observational dataset from their sources
@@ -11,7 +11,7 @@ BEST: http://berkeleyearth.lbl.gov/auto/Global/Gridded/Land_and_Ocean_LatLong1.n
 HadCRUT5: https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc \
 GISTEMP: https://data.giss.nasa.gov/pub/gistemp/gistemp1200_GHCNv4_ERSSTv5.nc.gz \
 ERA5 1950-1978: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means-preliminary-back-extension?tab=overview \
-ERA5 1979-2019: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview \
+ERA5 1979-2021: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview \
 
 ### 2. Merge ERA5 into one file
 cdo -mergetime input1 input2 output
