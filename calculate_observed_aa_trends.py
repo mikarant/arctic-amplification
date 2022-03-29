@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import functions as fcts
+import datetime
 
 # reference area ('global', 'nh' or 'sh')
 refarea = 'global'
@@ -17,44 +18,47 @@ refarea = 'global'
 season = 'ANN'
 
 
-### lenght of trend period (default = 40 years)
-period = 40
+### lenght of trend period (default = 43 years)
+period = 43
 
 # starting year (the first year which is included for the linear trends)
-startYear = 1961
+startYear = 1950
 
 # latitude threshold for the Arctic
 latitude_threshold = 66.5
 
 # select observational datasets
-obsDatasets = ['BEST', 'GISTEMP', 'COWTAN','ERA5']
+obsDatasets = ['BEST', 'GISTEMP', 'HADCRUT','ERA5']
 
 # variables in observations
 variables = {'GISTEMP': 'tempanomaly',
              'BEST': 'temperature',
-             'COWTAN': 'temperature_anomaly',
+             'HADCRUT': 'tas_mean',
              'ERA5': 't2m',
              }
 
 # long names of observations
 longnames = ['Berkeley\nEarth',
              'Gistemp',
-             'Cowtan&\nWay',
+             'HadCRUT5',
              'ERA5',
              ]
 
+# derive the month name 
 if type(season) == int:
     operator = '-selmon,'
     season = str(season)
+    month_name=datetime.date(1900, int(season), 1).strftime('%b').lower()
 elif type(season) == str:
     operator = '-selseason,'
+    month_name=season.lower()
 
 
 ### observations
 
 ## initialize dataframes
-temp_obs_arctic = pd.DataFrame(index=np.arange(1950,2020), columns=obsDatasets)
-temp_obs_ref = pd.DataFrame(index=np.arange(1950,2020), columns=obsDatasets)
+temp_obs_arctic = pd.DataFrame(index=np.arange(1950,2022), columns=obsDatasets)
+temp_obs_ref = pd.DataFrame(index=np.arange(1950,2022), columns=obsDatasets)
 
 # loop over datasets
 for o in obsDatasets:
@@ -66,7 +70,7 @@ for o in obsDatasets:
 
 
 # calculate AA ratios for the observational datasets
-years = np.arange(startYear,2020-period+1)
+years = np.arange(startYear,2022-period+1)
 df_obs =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 df_obs_min =pd.DataFrame(index=years+period-1, columns=obsDatasets)
 df_obs_max =pd.DataFrame(index=years+period-1, columns=obsDatasets)
@@ -82,13 +86,29 @@ for y in years:
         df_obs_max[o][y+period-1] = int_max
 
 
-        
-print('Observed Arctic amplification 1980-2019:')
-print(str(np.round(df_obs.loc[2019].mean(),4)))
+# calculate AA ratios for time windows ending to present
+years = np.arange(startYear,2021)
+AA_to_present = pd.DataFrame(index=years, columns=obsDatasets)
+r_to_present = pd.DataFrame(index=years, columns=obsDatasets)
+
+
+for y in years:
+    yrange = np.arange(y,years[-1]+2)
     
-### export 1980-2019 trends in csv-file
-syear = 2020-period
-yrange =  np.arange(syear,2020) 
+    for o in obsDatasets:
+        ratio, rvalue = fcts.getRatioPresent(temp_obs_ref, temp_obs_arctic, o, yrange, period)
+        AA_to_present[o][y] = ratio
+        r_to_present[o][y] = rvalue
+
+
+
+        
+print('Observed Arctic amplification 1979-2021:')
+print(str(np.round(df_obs.loc[2021].mean(),4)))
+    
+### export 1979-2021 trends in csv-file
+syear = 2022-period
+yrange =  np.arange(syear,2022) 
 
 df_trends = pd.DataFrame(index=['Arctic trend', 'Global trend'], columns=obsDatasets)
 df_err = pd.DataFrame(index=['Arctic', 'Global'], columns=obsDatasets)
@@ -108,8 +128,11 @@ for o in obsDatasets:
 
 
 
-df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends.csv')
-df_err.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors.csv')
+df_trends.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_'+month_name+'.csv')
+df_err.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_'+month_name+'.csv')
+df_obs.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_'+month_name+'.csv', index_label='Year')
+
+AA_to_present.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_to_present.csv', index_label='Year')
 
 temp_obs_arctic.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
 temp_obs_ref.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
