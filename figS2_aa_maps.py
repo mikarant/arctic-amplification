@@ -57,31 +57,31 @@ datapath = '/Users/rantanem/Documents/python/data/arctic_warming/'
 # define the datafiles
 
 files = {'gistemp': datapath + 'GISTEMP.nc',
-         'best': datapath + 'BEST.nc',
-         'cw': datapath + 'COWTAN.nc',
-         'era5' : datapath + 'era5_t2m_1950-2019.nc'}
+         'best': datapath + 'BEST-retimed.nc',
+         'hadcrut': datapath + 'hadcrut5.nc',
+         'era5' : datapath + 'era5_t2m_1950-2021.nc'}
 
 variables = {'gistemp': 'tempanomaly',
              'best': 'temperature',
-             'cw': 'temperature_anomaly',
+             'hadcrut': 'tas_mean',
              'era5': 't2m',
              }
 
 lons = {'gistemp': 'lon',
         'best': 'longitude',
-        'cw': 'longitude',
+        'hadcrut':'longitude',
         'era5': 'longitude',
         }
 
 lats = {'gistemp': 'lat',
         'best': 'latitude',
-        'cw': 'latitude',
+        'hadcrut': 'latitude',
         'era5': 'latitude',
         }
 
 titles = {'gistemp': 'a) Gistemp',
         'best': 'b) Berkeley Earth',
-        'cw': 'c) Cowtan & Way',
+        'hadcrut': 'c) HadCRUT5',
         'era5': 'd) ERA5',
         }
 
@@ -95,7 +95,7 @@ for f in files:
     print('Calculating AA ratio for '+ f)
 
     # calculate annual means
-    annual_means = cdo.yearmean(input =  "-selyear,1980/2019 " + files[f])
+    annual_means = cdo.yearmean(input =  "-selyear,1979/2021 " + files[f])
 
     # calculate trends
     trend1, trend2 = cdo.trend(input = annual_means)
