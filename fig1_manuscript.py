@@ -61,7 +61,7 @@ datapath = '/Users/rantanem/Documents/python/data/arctic_warming/'
 
 
 temp_obs_arctic = pd.read_csv(datapath + '/arctic_temps_obs.csv',index_col=0)
-temp_obs_ref = pd.read_csv(datapath +'/reference_temps_obs.csv',index_col=0)
+temp_obs_ref = pd.read_csv(datapath +'/global_temps_obs.csv',index_col=0)
 
 ds = xr.open_dataset(datapath +'/OBSAVE_trend.nc')
 trend_new, new_lon = add_cyclic_point(ds.trend_masked*10, coord=ds['lon'])
@@ -167,5 +167,32 @@ f8_ax2.annotate('b)',(0,0.97), xycoords='axes fraction', fontsize=17,fontweight=
 f8_ax3.annotate('c)',(0,0.97), xycoords='axes fraction', fontsize=17,fontweight='bold')
 
 
-plt.savefig('/Users/rantanem/Documents/python/figures/fig1_manuscript.png',dpi=200,bbox_inches='tight')
+plt.savefig('/Users/rantanem/Documents/python/figures/figure1.pdf',dpi=300,bbox_inches='tight')
+
+
+## This part of the script plots the figure used in peer-review response
+
+fig, ax= plt.subplots(nrows=1, ncols=2, figsize=(10,4), dpi=200, sharex=False)
+
+ax[0].plot(years, temp_obs_arctic.ERA5,c='green', alpha=1,label='ERA5')
+ax[0].plot(years, temp_obs_arctic.BEST, c='blue', alpha=1,label='Berkeley Earth')
+ax[0].plot(years, temp_obs_arctic.HADCRUT, c='red', alpha=1,label='HadCRUT5')
+ax[0].plot(years, temp_obs_arctic.GISTEMP,c='orange', alpha=1,label='Gistemp')
+ax[0].axhline(y=0.0, color='black', linestyle='-')
+ax[0].legend(fontsize=12)
+
+ax[0].set_title('Temperatures in the Arctic', loc='left', fontsize=16)
+ax[0].tick_params(axis='both', which='major', labelsize=14)
+ax[0].set_ylabel('Temperature anomaly [°C]', fontsize=14)
+
+ax[1].plot(years, temp_obs_arctic.ERA5 - temp_obs_arctic.BEST, c='blue', alpha=1,label='ERA5 - Berkeley Earth')
+ax[1].plot(years, temp_obs_arctic.ERA5 - temp_obs_arctic.HADCRUT, c='red', alpha=1,label='ERA5 - HadCRUT5')
+ax[1].plot(years, temp_obs_arctic.ERA5 - temp_obs_arctic.GISTEMP,c='orange', alpha=1,label='ERA5 - Gistemp')
+ax[1].axhline(y=0.0, color='black', linestyle='-')
+ax[1].legend(fontsize=12)
+ax[1].set_title('Temperature difference to ERA5', loc='left', fontsize=16)
+ax[1].tick_params(axis='both', which='major', labelsize=14)
+ax[1].set_ylabel('Temperature difference [°C]', fontsize=14)
+
+fig.subplots_adjust(wspace=0.4)
 
