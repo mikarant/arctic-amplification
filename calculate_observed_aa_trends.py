@@ -137,4 +137,4 @@ AA_to_present.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/obser
                      index_label='Year', na_rep='NaN')
 
 temp_obs_arctic.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/arctic_temps_obs.csv', index_label='Year')
-temp_obs_ref.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/reference_temps_obs.csv', index_label='Year')
+temp_obs_ref.to_csv('/Users/rantanem/Documents/python/data/arctic_warming/global_temps_obs.csv', index_label='Year')
