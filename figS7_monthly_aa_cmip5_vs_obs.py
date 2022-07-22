@@ -14,6 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os.path import exists
 from scipy import stats
+import seaborn as sns
+sns.set_theme()
 
 
 months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov', 'dec', 'ann']
@@ -45,7 +47,7 @@ for m in months:
     cmip5_aa_monthly[m] = cmip5_aa
     
     
-    path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_'+m+'.csv'
+    path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/obs_aa_seasonality/observed_aa_'+m+'.csv'
     file_exists = exists(path_to_obs_file)
     if not file_exists:
         path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv'
