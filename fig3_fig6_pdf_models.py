@@ -20,7 +20,7 @@ fs =14
 obs_year=2021
 
 # use only one realization in CMIP6
-one_realization_cmip6=True
+one_realization_cmip6=False
 
 # select probability time window for models
 prob_years = np.arange(2012,2041)
@@ -47,11 +47,11 @@ all_models = [word for line in cmip6_col for word in line.split('_')][::2]
 number_of_members = Counter(all_models)
 
 
-cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv', index_col=0)
+cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa_ann.csv', index_col=0)
 cmip5_ratios_plot=cmip5.loc[prob_years].values.ravel()
 
 # read MPI_GE model data
-mpi_df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_aa_ann.csv', index_col=0)
+mpi_df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_aa_ann.csv', index_col=0)
 mpi_ratios_plot=mpi_df.loc[prob_years].values.ravel()
 
 
@@ -147,9 +147,9 @@ cond = (cmip5.loc[timser_years]>obs_aa).sum()
 axlist[0].set_ylabel('Density', fontsize=fs)
 
 figurePath = '/Users/rantanem/Documents/python/figures/'
-figureName = 'aa_pdfs_all.png'
+figureName = 'figure6.pdf'
   
-plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+plt.savefig(figurePath + figureName,dpi=300,bbox_inches='tight')
 
 
 ### PLOT time series
@@ -193,9 +193,9 @@ ax[0].legend(handles=obs_plot, loc='upper center', bbox_to_anchor=(0.55, 1.02),
 ax[0].set_ylabel('Arctic amplification', fontsize=fs)
 
 figurePath = '/Users/rantanem/Documents/python/figures/'
-figureName = 'aa_timeser_all.png'
+figureName = 'figure3.pdf'
   
-plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+plt.savefig(figurePath + figureName,dpi=300,bbox_inches='tight')
 
  
 

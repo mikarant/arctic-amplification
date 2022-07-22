@@ -22,7 +22,7 @@ aa_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/obser
 cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa_to_present.csv', index_col=0)
 
 # read MPI-GE AA
-mpi = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_aa_to_present.csv', index_col=0)
+mpi = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_aa_to_present.csv', index_col=0)
 
 
 # read cmip6 AA
@@ -96,6 +96,6 @@ ax[0].legend(handles=obs_plot, loc='upper center', bbox_to_anchor=(0.43, 0.15),
 ax[0].set_ylabel('Arctic amplification', fontsize=fs)
 
 figurePath = '/Users/rantanem/Documents/python/figures/'
-figureName = 'aa_to_present.png'
+figureName = 'figure4.pdf'
   
-plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+plt.savefig(figurePath + figureName,dpi=300,bbox_inches='tight')
