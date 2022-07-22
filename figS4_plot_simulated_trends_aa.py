@@ -45,9 +45,9 @@ cmip5_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_
 cmip5_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv',index_col=0)
 
 ## read mpi results
-mpi_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_global_trends_ann.csv',index_col=0)
-mpi_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_arctic_trends_ann.csv',index_col=0)
-mpi_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_aa_ann.csv',index_col=0)
+mpi_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_global_trends_ann.csv',index_col=0)
+mpi_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_arctic_trends_ann.csv',index_col=0)
+mpi_ratios = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_aa_ann.csv',index_col=0)
 
 ## read canesm5 results
 canesm_col = [s for s in cmip6_ref_trends.columns if 'CanESM5'.rstrip() in s]
@@ -71,7 +71,7 @@ cmip6_ratios = cmip6_ratios[cmip6_without_canesm]
 
 ### observed trends with lines
 df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends.csv', index_col=0)
-df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa.csv', index_col=0)
+df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
 
 
 
