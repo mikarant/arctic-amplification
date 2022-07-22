@@ -16,44 +16,46 @@ sns.set_theme()
 ## fontsize
 fs =14
 
-obs_year=2018
-year = np.arange(2010,2041)
+obs_year=2021
+
+# select probability time window for models
+prob_years = np.arange(2012,2041)
 
 
-mpi_ind_timeser = np.isin(np.arange(1889,2100), np.arange(2000,2041))
-mpi_ind_hist = np.isin(np.arange(1889,2100), np.arange(2010,2041))
-canesm_ind = np.isin(np.arange(1889,2101), year)
 
 #cmip6 models
 models = pd.read_excel('/Users/rantanem/Documents/python/data/arctic_warming/list_of_models.xlsx')
 models = models[models.ssp245>0]
 
-cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa.csv', index_col=0)
+cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_ann.csv', index_col=0)
 cmip6_col = list(cmip6.columns)
 canesm_col = [s for s in cmip6_col if 'CanESM5'.rstrip() in s]
 
 cmip5 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip5/cmip5_aa.csv', index_col=0)
-cmip5_ratios_plot=cmip5.loc[year].values.ravel()
+cmip5_ratios_plot=cmip5.loc[prob_years].values.ravel()
 
-mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM_rcp45.nc')
-mpi_timeser = pd.DataFrame(data=mpi_ds.aa.values[:,mpi_ind_timeser].transpose(), index=np.arange(2000,2041), columns=np.arange(1,101))
-mpi_ratios_plot=mpi_ds.aa.values[:,mpi_ind_hist].squeeze().ravel()
 
-canesm_ratios_plot = cmip6[canesm_col].loc[year].values.squeeze().ravel()
+# read MPI_GE model data
+mpi_df = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_aa_ann.csv', index_col=0)
+mpi_ratios_plot=mpi_df.loc[prob_years].values.ravel()
+
+
+# read CanESM5 model data
+canesm_col = [s for s in cmip6_col if 'CanESM5'.rstrip() in s]
+canesm_ratios_plot = cmip6[canesm_col].loc[prob_years].values.squeeze().ravel()
 
 
 # exclude canesm5 from cmip6
 cmip6_without_canesm = [m for m in cmip6_col if m not in canesm_col]
 cmip6_all = cmip6.copy()
 cmip6 = cmip6[cmip6_without_canesm]
-cmip6_all_ratios_plot=cmip6.loc[year].values.ravel()
 
 
 
 
 
 
-df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa.csv', index_col=0)
+df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
 
 
 
@@ -65,7 +67,7 @@ obs_aa = df_obs.loc[obs_year].mean(axis=0)
 cmip6_probs = pd.DataFrame(index=models.Name, columns=['n','p', 'n_aa'])
 for m in models.Name:
     matching = [s for s in cmip6.columns if m.rstrip() in s]
-    ensemble = cmip6.loc[year][matching]
+    ensemble = cmip6.loc[prob_years][matching]
     cond = np.sum(ensemble >= obs_aa).sum()
     prob_ensemble = np.round(cond/np.size(ensemble)*100,1)
     cmip6_probs.loc[m].n = len(matching)
@@ -73,14 +75,14 @@ for m in models.Name:
     cmip6_probs.loc[m].n_aa = cond
     
 # calculate the probabilities for CMIP6 using only one realization per model
-cmip6_r1 = pd.DataFrame(columns=models.Name, index=year)
+cmip6_r1 = pd.DataFrame(columns=models.Name, index=prob_years)
 for m in models.Name:
     matching = [s for s in cmip6.columns if m.rstrip()+'_r1i1p1' in s]
     if m =='CESM2':
          matching = [s for s in cmip6.columns if m.rstrip()+'_r4i1p1' in s]
         
     if matching:
-        ensemble = cmip6.loc[year][matching[0]]
+        ensemble = cmip6.loc[prob_years][matching[0]]
         cmip6_r1[m] = ensemble
 
 cmip6_r1_plot = cmip6_r1.values.squeeze().ravel()
