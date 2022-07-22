@@ -2,6 +2,8 @@
 
 This repository contains python- and R-scripts to calculate Arctic amplification metrics and figures presented in Rantanen et al. (2022) manuscript "The Arctic has warmed nearly four times faster than the globe since 1979"
 
+The dataset for producing the charts and graphs of the manuscript is reposited in public repository at http://doi.org/10.23728/fmi-b2share.5d81ded56e984072a5f7162a18b60cb9. The instructions to produce the data are below.
+
 ## Post process the observational data
 With these instructions you can post-process the observational datasets to calculate the Arctic amplification diagnostics. You need CDO software (https://code.mpimet.mpg.de/projects/cdo) and python version 3+. You can calculate the datasets by yourself by following these steps, or just download them from links given below.
 
@@ -31,13 +33,9 @@ cdo -sub input test-clim test-anom
 python fix_berkeley_earth_timeaxis.py
 
 
-The four datasets undergone these steps are availabe from here: https://fmi100-my.sharepoint.com/:f:/g/personal/mika_rantanen_fmi_fi/Eh57LkCaG1pAqOF1I1pRmzcB39CW13XwkekxLeA7ZZZxmA?e=bbN4Z3
-
 ### 6. Calculate average of the observational datasets
 cdo -L -b F32 -ensmean -selyear,1950/2021 -selvar,temperature BEST-regridded-retimed-anom.nc -selyear,1950/2021 -selvar,tas_mean hadcrut5-regridded-anom.nc -selyear,1950/2021 -selvar,tempanomaly GISTEMP-regridded-anom.nc -selyear,1950/2021 -selvar,t2m ERA5-regridded-anom.nc OBSAVE.nc
 
-
-The resulting datafile "OBSAVE.nc" is the average of the four observational datasets, and is available from here: https://fmi100-my.sharepoint.com/:u:/g/personal/mika_rantanen_fmi_fi/EVDgQ5CiLnFBraqzx6S4psYBE0kTL9-bmhmTWCU-RUWA9w?e=bdXUZL
 
 ## Calculate the observed AA ratios and trends
 ### 1. Calculate the observed values
