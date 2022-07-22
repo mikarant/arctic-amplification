@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_ann.csv', index_col=0)
-df_err = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_ann.csv', index_col=0)
+df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_1979-2021_ann.csv', index_col=0)
+df_err = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors_1979-2021_ann.csv', index_col=0)
 df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
 
 
