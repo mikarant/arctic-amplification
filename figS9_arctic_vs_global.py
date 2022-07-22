@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import xarray as xr
 
 ### read observed
-df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_ann.csv', index_col=0)
+df_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_trends_1979-2021_ann.csv', index_col=0)
 df_err = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_errors.csv', index_col=0)
 df_obs = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv', index_col=0)
 
@@ -31,8 +31,8 @@ canesm_ref_trends = cmip6_ref_trends[canesm_col]
 
 ## read mpi results
 # mpi_ds = xr.open_dataset('/Users/rantanem/Documents/python/data/arctic_warming/data_pdf_plots_MPI-ESM_rcp45.nc')
-mpi_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_global_trends_ann.csv',index_col=0)
-mpi_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge_arctic_trends_ann.csv',index_col=0)
+mpi_ref_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_global_trends_ann.csv',index_col=0)
+mpi_arctic_trends = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/mpi-ge/mpi-ge_arctic_trends_ann.csv',index_col=0)
 
 
 
