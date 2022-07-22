@@ -22,7 +22,7 @@ include_canesm5=False
 
 months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov', 'dec', 'ann']
 
-cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6_aa.csv', index_col=0)
+cmip6 = pd.read_csv('/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_ann.csv', index_col=0)
 cmip6_col = list(cmip6.columns)
 if not include_canesm5:
     print('\nCanESM5 not included!\n')
@@ -38,7 +38,7 @@ obs_perc_rank = pd.DataFrame(columns=months, index=['rank'])
 
 for m in months:
     
-    path_to_cmip6_file = '/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_'+m+'.csv'
+    path_to_cmip6_file = '/Users/rantanem/Documents/python/data/arctic_warming/cmip6/cmip6_aa_seasonality/cmip6_aa_'+m+'.csv'
     file_exists = exists(path_to_cmip6_file)
     # if monthly file does not exist, use annual file
     if not file_exists:
@@ -53,7 +53,7 @@ for m in months:
     cmip6_aa_monthly[m] = cmip6_aa
     
     
-    path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_'+m+'.csv'
+    path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/obs_aa_seasonality/observed_aa_'+m+'.csv'
     file_exists = exists(path_to_obs_file)
     if not file_exists:
         path_to_obs_file = '/Users/rantanem/Documents/python/data/arctic_warming/observed_aa_ann.csv'
@@ -104,4 +104,4 @@ ann_ax.annotate(str(int(obs_perc_rank['ann'].round(0).values.squeeze()))+'%', (0
 
 ann_ax.legend(bbox_to_anchor=((-0.34,0.12)), fontsize=16)
 
-plt.savefig('/Users/rantanem/Documents/python/figures/aa_monthly_comparison_cmip6.png',dpi=200,bbox_inches='tight')
+plt.savefig('/Users/rantanem/Documents/python/figures/figure5.pdf',dpi=300,bbox_inches='tight')
