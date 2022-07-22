@@ -25,7 +25,7 @@ newcolors[-2:, :3] = newcolors[-2:, :3] * 0.4
 newcm = ListedColormap(newcolors)
 norm2D = Normalize(vmin=0, vmax=7)
 
-model='cmip5'
+model='cmip6'
 
 Ncolors = 20
 cmdiff = ListedColormap(plt.get_cmap('RdYlBu_r', Ncolors)(np.linspace(0, 1, Ncolors)[1:-1]))
@@ -46,7 +46,7 @@ time_window = np.array(aa_df.columns.astype(float))
 aa_df = aa_df.astype(float)
 perc_df = perc_df.astype(float)
 
-fig, ax= plt.subplots(nrows=1, ncols=2, figsize=(14,5.5), dpi=200)
+fig, ax= plt.subplots(nrows=1, ncols=2, figsize=(14,5.5), dpi=300)
 fs=16
 
 
@@ -78,6 +78,6 @@ ax[0].set_title('a)', fontsize=fs)
 ax[1].set_title('b)', fontsize=fs)
 
 figurePath = '/Users/rantanem/Documents/python/figures/'
-figureName = 'aa_sensitivity_'+model+'.png'
+figureName = 'figure2.pdf'
   
-plt.savefig(figurePath + figureName,dpi=200,bbox_inches='tight')
+plt.savefig(figurePath + figureName,dpi=300,bbox_inches='tight')
